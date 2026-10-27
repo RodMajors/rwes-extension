@@ -1,5 +1,4 @@
 import { getSettings, watchSettings } from "../shared/settings.js";
-import { installPageHooks } from "./page-hooks.js";
 import browser from "webextension-polyfill";
 
 void (async function start() {
@@ -21,7 +20,6 @@ void (async function start() {
   };
   await import("./legacy.cjs");
   globalThis.__RWES_LEGACY_API__?.boot();
-  installPageHooks();
   let applyingSettings = false;
   watchSettings(async () => {
     if (applyingSettings) return;
