@@ -1,0 +1,58 @@
+.gitignore
+  h_1dc22111645538 1-6
+README.md
+  h_1dc22111645538 1-25
+assets/icons/icon.svg
+  h_1dc22111645538 1-46
+build.mjs
+  h_1dc22111645538 1-56
+docs/legacy-greasyfork-description.md
+  h_1dc22111645538 1-100
+docs/legacy-userscript-reference.md
+  h_1dc22111645538 1-17
+docs/superpowers/specs/2026-10-27-extension-migration-design.md
+  h_1dc22111645538 4,13,23,30-32,37,39,47,87-88,96,117,133,140
+manifest.base.json
+  h_1dc22111645538 1-15
+package-lock.json
+  h_1dc22111645538 1-1781
+package.json
+  h_1dc22111645538 1-26
+src/background/entry.js
+  h_1dc22111645538 1-92
+src/background/idb.js
+  h_1dc22111645538 1-74
+src/background/sync.js
+  h_1dc22111645538 1-68
+src/content/legacy.cjs
+  h_1dc22111645538 1-1159
+src/content/main.js
+  h_1dc22111645538 1-42
+src/content/page-hooks-main.js
+  h_1dc22111645538 1-10
+src/content/page-hooks.js
+  h_1dc22111645538 1-13
+src/popup/popup.css
+  h_1dc22111645538 1-25
+src/popup/popup.html
+  h_1dc22111645538 1-26
+src/popup/popup.js
+  h_1dc22111645538 1-52
+src/shared/constants.js
+  h_1dc22111645538 1-34
+src/shared/settings.js
+  h_1dc22111645538 1-22
+tests/translate.test.cjs
+  h_1dc22111645538 1-226
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ddb0b64a97f81558b22599cdae1d8de50403d64c",
+  "prompts": {},
+  "humans": {
+    "h_1dc22111645538": {
+      "author": "rodmajors <liangzerui@eccom.com.cn>"
+    }
+  }
+}
