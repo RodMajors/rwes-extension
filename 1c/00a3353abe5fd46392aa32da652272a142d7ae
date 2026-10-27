@@ -1,0 +1,14 @@
+docs/superpowers/specs/2026-10-27-extension-migration-design.md
+  h_1dc22111645538 1-150
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1c00a3353abe5fd46392aa32da652272a142d7ae",
+  "prompts": {},
+  "humans": {
+    "h_1dc22111645538": {
+      "author": "rodmajors <liangzerui@eccom.com.cn>"
+    }
+  }
+}
