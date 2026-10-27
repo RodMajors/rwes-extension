@@ -34,16 +34,7 @@ RWES 使用由《魔兽世界》客户端数据构建的在线词典，并将下
 
 ## 支持的网站
 
-| 用途 | 网站 |
-| --- | --- |
-| 游戏数据库与攻略 | Wowhead、Icy-Veins |
-| 战斗日志 | Warcraft Logs（WCL） |
-| 配装与模拟 | Raidbots、LiquidArmory、Questionably Epic（QE Live）、Archon、Murlok、KeystoneLoot |
-| 战斗分析 | WowAnalyzer、Wipefest |
-| 排行榜 | Raider.io、MythicStats |
-| 其他游戏工具 | Bloodmallet、Maxroll、MythicTrap、Lorrgs、SimulationCraft |
-
-扩展仅在 manifest 声明的相关站点运行。新增或变更支持范围时，以商店发布的版本和扩展权限说明为准。
+RWES 面向《魔兽世界》相关的游戏数据库、攻略、战斗日志、配装模拟和数据分析网站。扩展仅在当前版本声明的相关网站上运行；具体兼容范围可能随网站和扩展版本调整。
 
 ## 设置与使用
 
