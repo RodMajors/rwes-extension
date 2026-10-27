@@ -1,0 +1,19 @@
+docs/superpowers/specs/2026-10-27-extension-migration-design.md
+  s_834e98817737b8::t_a0d42dc9a31e96 47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a6d18853238cc6169b36a632ddab537a8c06eb5e",
+  "prompts": {},
+  "sessions": {
+    "s_834e98817737b8": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_ec6a61d5bffekY9BdcTtKtom7G",
+        "model": "unknown"
+      },
+      "human_author": "rodmajors <liangzerui@eccom.com.cn>"
+    }
+  }
+}
