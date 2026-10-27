@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RWES</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header><img src="icons/icon32.png" alt="" /><div><h1>RWES</h1><span>魔兽世界中文增强</span></div><b id="app-version"></b></header>
+    <main>
+      <section class="settings">
+        <label><span>自动翻译英文名词</span><input type="checkbox" data-setting="translateEnabled" /></label>
+        <label><span>Wowhead 跳转简中</span><input type="checkbox" data-setting="autoRedirectWowheadCN" /></label>
+        <label><span>WCL 跳转 cn</span><input type="checkbox" data-setting="autoRedirectWCLCN" /></label>
+        <label><span>测试服链接改正式服</span><input type="checkbox" data-setting="forceTestToCN" /></label>
+      </section>
+      <section class="dictionary">
+        <dl><dt>词典版本</dt><dd id="version">读取中</dd><dt>同步状态</dt><dd id="status" role="status">读取中</dd><dt>本地缓存</dt><dd id="cache">读取中</dd></dl>
+        <div class="actions"><button id="sync" type="button">重新同步</button><button id="clear" class="secondary" type="button">清空缓存</button></div>
+      </section>
+    </main>
+    <footer><a href="https://github.com/RWES-RodMajors-WOW-Enhance-Script/RWES" target="_blank" rel="noreferrer">反馈与项目主页</a></footer>
+    <script src="popup.js"></script>
+  </body>
+</html>

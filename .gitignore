@@ -1,0 +1,6 @@
+node_modules/
+dist/
+npm-debug.log*
+/.chrome-smoke-profile/
+/chrome-smoke.stdout
+/chrome-smoke.stderr

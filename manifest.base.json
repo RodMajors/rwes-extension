@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "RWES 魔兽世界中文增强",
+  "version": "1.0.0",
+  "description": "魔兽世界常用网站中文体验增强：名称翻译、简中跳转与广告清理。",
+  "minimum_chrome_version": "111",
+  "icons": { "16": "icons/icon16.png", "32": "icons/icon32.png", "48": "icons/icon48.png", "128": "icons/icon128.png" },
+  "permissions": ["storage", "unlimitedStorage", "scripting"],
+  "host_permissions": ["https://wowdata.rodmajors.com/*"],
+  "action": { "default_popup": "popup.html", "default_title": "RWES 魔兽世界中文增强" },
+  "content_scripts": [
+    { "matches": [], "js": ["content.js"], "run_at": "document_start" },
+    { "matches": [], "js": ["page-hooks-main.js"], "run_at": "document_start", "world": "MAIN" }
+  ]
+}

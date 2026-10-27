@@ -1,0 +1,26 @@
+{
+  "name": "rwes-extension",
+  "version": "1.0.0",
+  "description": "魔兽世界常用网站中文用户体验增强",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs all",
+    "build:chrome": "node build.mjs chrome",
+    "build:firefox": "node build.mjs firefox",
+    "test": "node tests/translate.test.cjs"
+  },
+  "keywords": [
+    "wow",
+    "browser-extension",
+    "translation"
+  ],
+  "author": "RodMajors",
+  "license": "MIT",
+  "dependencies": {
+    "webextension-polyfill": "^0.12.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.19.12",
+    "sharp": "^0.32.6"
+  }
+}
