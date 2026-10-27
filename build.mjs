@@ -28,7 +28,7 @@ for (const platform of platforms) {
       { matches: SUPPORTED_MATCHES, js: ["content.js"], run_at: "document_start" },
       { matches: SUPPORTED_MATCHES, js: ["page-hooks-main.js"], run_at: "document_start", world: "MAIN" },
     ],
-    ...(firefox ? { browser_specific_settings: { gecko: { id: "rwes@rodmajors.com", strict_min_version: "128.0", data_collection_permissions: { required: ["none"] } } } } : {}),
+    ...(firefox ? { browser_specific_settings: { gecko: { id: "rwes@rodmajors.com", strict_min_version: "142.0", data_collection_permissions: { required: ["none"] } } } } : {}),
   };
   await writeFile(path.join(outdir, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
   await cp(path.join(root, "_locales"), path.join(outdir, "_locales"), { recursive: true });

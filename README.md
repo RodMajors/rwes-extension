@@ -2,7 +2,7 @@
 
 面向《魔兽世界》玩家的浏览器扩展，为常用的游戏数据库、战斗日志、配装模拟和攻略网站提供中文体验增强。RWES 可以翻译游戏专有名词、将 Wowhead 和 Warcraft Logs（WCL）切换到简体中文，并清理部分页面广告和冗余版面，让浏览外文资料更轻松。
 
-扩展支持 Chrome、Microsoft Edge 和 Firefox。Chrome 与 Edge 使用同一份扩展构建；Firefox 使用独立的兼容构建。
+扩展支持 Chrome 111+、Microsoft Edge 和 Firefox 142+。Chrome 与 Edge 使用同一份扩展构建；Firefox 使用独立的兼容构建。
 
 ## 主要功能
 
