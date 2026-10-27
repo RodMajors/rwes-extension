@@ -1,5 +1,5 @@
 import { build } from "esbuild";
-import { copyFile, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { copyFile, cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { SUPPORTED_MATCHES } from "./src/shared/constants.js";
@@ -28,9 +28,10 @@ for (const platform of platforms) {
       { matches: SUPPORTED_MATCHES, js: ["content.js"], run_at: "document_start" },
       { matches: SUPPORTED_MATCHES, js: ["page-hooks-main.js"], run_at: "document_start", world: "MAIN" },
     ],
-    ...(firefox ? { browser_specific_settings: { gecko: { id: "rwes@rodmajors.com", strict_min_version: "128.0" } } } : {}),
+    ...(firefox ? { browser_specific_settings: { gecko: { id: "rwes@rodmajors.com", strict_min_version: "128.0", data_collection_permissions: { required: ["none"] } } } } : {}),
   };
   await writeFile(path.join(outdir, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
+  await cp(path.join(root, "_locales"), path.join(outdir, "_locales"), { recursive: true });
   await Promise.all([
     build({ entryPoints: [path.join(root, "src/content/main.js")], bundle: true, format: "iife", outfile: path.join(outdir, "content.js"), platform: "browser", target: firefox ? ["firefox128"] : ["chrome111"], define: { "process.env.NODE_ENV": '"production"' } }),
     build({ entryPoints: [path.join(root, "src/content/page-hooks-main.js")], bundle: true, format: "iife", outfile: path.join(outdir, "page-hooks-main.js"), platform: "browser", target: firefox ? ["firefox128"] : ["chrome111"] }),

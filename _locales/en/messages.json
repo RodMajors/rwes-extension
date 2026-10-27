@@ -1,0 +1,14 @@
+{
+  "extensionName": {
+    "message": "RWES World of Warcraft Chinese Enhancement",
+    "description": "Extension name"
+  },
+  "extensionShortName": {
+    "message": "RWES",
+    "description": "Short name shown in the browser toolbar"
+  },
+  "extensionDescription": {
+    "message": "Translates World of Warcraft terminology on supported websites, provides Simplified Chinese redirects, and cleans up selected page elements.",
+    "description": "Extension description shown in the store and browser extension manager"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "extensionName": {
+    "message": "RWES 魔兽世界中文增强",
+    "description": "扩展名称"
+  },
+  "extensionShortName": {
+    "message": "RWES",
+    "description": "工具栏中显示的简短名称"
+  },
+  "extensionDescription": {
+    "message": "为魔兽世界相关网站翻译游戏术语、提供简体中文跳转，并清理部分页面元素。",
+    "description": "商店和浏览器扩展管理页面中的扩展描述"
+  }
+}
