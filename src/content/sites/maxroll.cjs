@@ -26,13 +26,20 @@ function dismissAdblockPrompt() {
 
 function translateSpellTooltip(root, translateDescription, activeSpellId) {
     const scope = root || document;
-    const triggers = Array.from(document.querySelectorAll(".wow-spell:hover[data-wow-id], .wow-spell:focus[data-wow-id]"));
+    const triggers = Array.from(document.querySelectorAll(".wow-spell:hover[data-wow-id], .wow-spell:focus[data-wow-id], .wow-trait:hover[data-wow-id], .wow-trait:focus[data-wow-id]"));
     if (activeSpellId && !triggers.some((element) => element.getAttribute("data-wow-id") === activeSpellId)) {
         triggers.unshift({ getAttribute: () => activeSpellId });
     }
-    if (!triggers.length) return false;
     const tooltip = scope.querySelector(".mxt-Tooltip") || document.querySelector(".mxt-Tooltip");
     if (!tooltip) return false;
+    const title = tooltip.querySelector(".mxt-title");
+    const titleSpellId = title && translateDescription.resolveTitle
+        ? translateDescription.resolveTitle(title.textContent.trim())
+        : null;
+    const spellIds = [];
+    if (titleSpellId) spellIds.push(titleSpellId);
+    if (activeSpellId && !activeSpellId.includes(":") && !spellIds.includes(activeSpellId)) spellIds.push(activeSpellId);
+    if (!spellIds.length && !triggers.length) return false;
     const walker = document.createTreeWalker(tooltip, NodeFilter.SHOW_TEXT);
     const nodes = [];
     while (walker.nextNode()) nodes.push(walker.currentNode);
@@ -40,8 +47,8 @@ function translateSpellTooltip(root, translateDescription, activeSpellId) {
     for (const node of nodes) {
         const original = node.nodeValue.trim();
         let replacement = null;
-        for (const trigger of triggers) {
-            replacement = translateDescription(original, trigger.getAttribute("data-wow-id"));
+        for (const spellId of spellIds) {
+            replacement = translateDescription(original, spellId);
             if (replacement) break;
         }
         if (replacement && replacement !== original) {
@@ -76,7 +83,7 @@ function installMaxroll(translateDescription, translateText) {
     dismissAdblockPrompt();
     let activeSpellId = null;
     document.addEventListener("pointerover", (event) => {
-        const spell = event.target && event.target.closest && event.target.closest(".wow-spell[data-wow-id]");
+        const spell = event.target && event.target.closest && event.target.closest(".wow-spell[data-wow-id], .wow-trait[data-wow-id]");
         if (spell) activeSpellId = spell.getAttribute("data-wow-id");
     }, true);
     const scan = () => {

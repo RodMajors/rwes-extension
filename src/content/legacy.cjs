@@ -163,9 +163,16 @@ const api = (function () {
     }
 
     function parseArtifact(obj) {
+        const byId = new Map(Object.entries((obj && obj.id) || {}));
+        const byEn = new Map(Object.entries((obj && obj.en) || {}));
+        const byZh = new Map();
+        for (const [id, zh] of byId) {
+            if (typeof zh === "string" && zh.trim() && !byZh.has(zh.trim())) byZh.set(zh.trim(), id);
+        }
         return {
-            byId: new Map(Object.entries((obj && obj.id) || {})),
-            byEn: new Map(Object.entries((obj && obj.en) || {})),
+            byId: byId,
+            byEn: byEn,
+            byZh: byZh,
         };
     }
 
@@ -179,6 +186,11 @@ const api = (function () {
         const n = String(name).trim().toLowerCase();
         if (!n || n.length < (minLen || 1)) return null;
         return index.byEn.get(n) || null;
+    }
+
+    function lookupZhId(index, name) {
+        if (!index || !index.byZh || !name) return null;
+        return index.byZh.get(String(name).trim()) || null;
     }
 
     function extractWowheadId(url) {
@@ -1064,9 +1076,13 @@ const api = (function () {
         const dictState = { server: CONFIG_TRANSLATE.dictServer, indexes: {} };
         let maxrollHandlers = null;
         if (host.endsWith("maxroll.gg")) {
-            maxrollHandlers = installMaxroll(function (text, spellId) {
+            const descriptionTranslator = function (text, spellId) {
                 return spellDescriptionTemplate(text, spellId, dictState.indexes);
-            }, function (text) {
+            };
+            descriptionTranslator.resolveTitle = function (title) {
+                return lookupZhId(dictState.indexes["spellname.json.gz"], title);
+            };
+            maxrollHandlers = installMaxroll(descriptionTranslator, function (text) {
                 return translateText(text, dictState.indexes);
             });
         }
@@ -1136,6 +1152,7 @@ const api = (function () {
         parseArtifact: parseArtifact,
         lookupId: lookupId,
         lookupEn: lookupEn,
+        lookupZhId: lookupZhId,
         extractWowheadId: extractWowheadId,
         serverBaseUrl: serverBaseUrl,
         findNameZh: findNameZh,

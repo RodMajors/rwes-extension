@@ -220,6 +220,12 @@ test("parseArtifact + lookupId", () => {
     assert.strictEqual(rwes.lookupId(idx, 99), null);
 });
 
+test("parseArtifact + lookupZhId: 中文标题可反查法术 ID", () => {
+    const index = rwes.parseArtifact({ id: { "1213649": "虚空射线" }, en: { "void ray": "虚空射线" } });
+    assert.strictEqual(rwes.lookupZhId(index, "虚空射线"), "1213649");
+    assert.strictEqual(rwes.lookupZhId(index, "未知技能"), null);
+});
+
 test("lookupEn: case-insensitive, minLen, miss", () => {
     const idx = rwes.parseArtifact({ id: {}, en: { "fireball": "火球术" } });
     assert.strictEqual(rwes.lookupEn(idx, "  Fireball ", 3), "火球术");
