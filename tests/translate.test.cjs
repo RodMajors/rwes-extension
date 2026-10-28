@@ -123,6 +123,12 @@ test("Raider.io 特判只处理右侧广告栏", () => {
     }
 });
 
+test("Raider.io 支持 raiderio.com 裸域", () => {
+    const constants = require("../src/shared/constants.js");
+    assert.ok(constants.SUPPORTED_MATCHES.includes("*://raiderio.com/*"));
+    assert.ok(constants.SUPPORTED_MATCHES.includes("*://*.raiderio.com/*"));
+});
+
 test("WowAnalyzer 特判删除广告槽位所属链接", () => {
     const originalDocument = global.document;
     let removed = 0;

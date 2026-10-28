@@ -14,6 +14,8 @@ export const SUPPORTED_MATCHES = [
   "*://*.wowhead.com/*",
   "*://*.warcraftlogs.com/*",
   "*://*.raider.io/*",
+  "*://raiderio.com/*",
+  "*://*.raiderio.com/*",
   "*://*.wipefest.gg/*",
   "*://*.bloodmallet.com/*",
   "*://*.wowanalyzer.com/*",

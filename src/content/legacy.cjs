@@ -112,6 +112,7 @@ const api = (function () {
         "maxroll.gg": "site-maxroll.json.gz",
         "icy-veins.com": "site-icy-veins.json.gz",
         "warcraftlogs.com": "site-warcraftlogs.json.gz",
+        "raiderio.com": "site-raiderio.json.gz",
         "raider.io": "site-raiderio.json.gz",
         "wowanalyzer.com": "site-wowanalyzer.json.gz",
         "mythictrap.com": "site-mythictrap.json.gz",
@@ -997,7 +998,7 @@ const api = (function () {
         // ==================== 各站点特判 ====================
         if (host.includes("wowhead.com") && installWowhead(CONFIG)) return;
         if (host.includes("warcraftlogs.com") && installWarcraftLogs(CONFIG)) return;
-        if (host.includes("raider.io")) installRaiderIo();
+        if (host === "raiderio.com" || host.endsWith(".raiderio.com") || host.includes("raider.io")) installRaiderIo();
         if (host.includes("wowanalyzer.com")) installWowAnalyzer();
         if (host.includes("mythictrap.com") && installMythicTrap(CONFIG)) return;
         if (host.includes("raidbots.com")) installRaidbots();
