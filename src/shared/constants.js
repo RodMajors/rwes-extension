@@ -7,6 +7,7 @@ export const SETTINGS_DEFAULTS = {
   translateEnabled: true,
   autoRedirectWowheadCN: true,
   autoRedirectWCLCN: true,
+  autoRedirectMythicTrapCN: true,
   forceTestToCN: false,
 };
 export const SUPPORTED_MATCHES = [

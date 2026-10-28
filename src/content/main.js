@@ -26,7 +26,12 @@ void (async function start() {
     applyingSettings = true;
     const previous = { ...values };
     Object.assign(values, await getSettings());
-    const siteSettingChanged = ["autoRedirectWowheadCN", "autoRedirectWCLCN", "forceTestToCN"].some((key) => previous[key] !== values[key]);
+    const siteSettingChanged = [
+      "autoRedirectWowheadCN",
+      "autoRedirectWCLCN",
+      "autoRedirectMythicTrapCN",
+      "forceTestToCN",
+    ].some((key) => previous[key] !== values[key]);
     const translationChanged = previous.translateEnabled !== values.translateEnabled;
     if (translationChanged && !values.translateEnabled) {
       globalThis.__RWES_LEGACY_API__?.setTranslationEnabled(values.translateEnabled);

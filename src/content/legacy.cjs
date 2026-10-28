@@ -45,6 +45,7 @@ const { installWarcraftLogs } = require("./sites/warcraftlogs.cjs");
 const { installRaiderIo } = require("./sites/raiderio.cjs");
 const { installWowAnalyzer } = require("./sites/wowanalyzer.cjs");
 const { installMaxroll } = require("./sites/maxroll.cjs");
+const { installMythicTrap } = require("./sites/mythictrap.cjs");
 
 const api = (function () {
     "use strict";
@@ -713,6 +714,11 @@ const api = (function () {
             autoRedirectWowheadCN: GM_getValue("autoRedirectWowheadCN", true),
             // 是否自动把 WCL 跳转到 cn 子域名(新增/强化)
             autoRedirectWCLCN: GM_getValue("autoRedirectWCLCN", true),
+            // 是否自动把 MythicTrap 页面跳转到简体中文
+            autoRedirectMythicTrapCN: GM_getValue(
+                "autoRedirectMythicTrapCN",
+                true,
+            ),
             // 是否把测试服链接也强制改成正式服简中(谨慎开启)
             forceTestToCN: GM_getValue("forceTestToCN", false),
         };
@@ -756,6 +762,7 @@ const api = (function () {
         if (host.includes("raider.io")) installRaiderIo();
         if (host.includes("wowanalyzer.com")) installWowAnalyzer();
         if (host.includes("maxroll.gg")) installMaxroll();
+        if (host.includes("mythictrap.com") && installMythicTrap(CONFIG)) return;
 
         // ==================== 6. 全站 Wowhead 链接 + 鼠标提示强制简中 ====================
         // 设置全局 tooltip 域名为简中

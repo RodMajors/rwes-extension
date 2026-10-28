@@ -18,6 +18,7 @@ const warcraftLogsSite = require("../src/content/sites/warcraftlogs.cjs");
 const raiderIoSite = require("../src/content/sites/raiderio.cjs");
 const wowAnalyzerSite = require("../src/content/sites/wowanalyzer.cjs");
 const maxrollSite = require("../src/content/sites/maxroll.cjs");
+const mythicTrapSite = require("../src/content/sites/mythictrap.cjs");
 
 test("站点特判模块导出安装入口", () => {
     assert.strictEqual(typeof wowheadSite.installWowhead, "function");
@@ -25,6 +26,15 @@ test("站点特判模块导出安装入口", () => {
     assert.strictEqual(typeof raiderIoSite.installRaiderIo, "function");
     assert.strictEqual(typeof wowAnalyzerSite.installWowAnalyzer, "function");
     assert.strictEqual(typeof maxrollSite.installMaxroll, "function");
+    assert.strictEqual(typeof mythicTrapSite.installMythicTrap, "function");
+});
+
+test("MythicTrap 中文路径规范化", () => {
+    assert.strictEqual(mythicTrapSite.chinesePath("/venomous-abyss/boss/mythic"), "/cn/venomous-abyss/boss/mythic");
+    assert.strictEqual(mythicTrapSite.chinesePath("/fr/venomous-abyss"), "/cn/venomous-abyss");
+    assert.strictEqual(mythicTrapSite.chinesePath("/en/venomous-abyss"), "/cn/venomous-abyss");
+    assert.strictEqual(mythicTrapSite.chinesePath("/cn/venomous-abyss"), "/cn/venomous-abyss");
+    assert.strictEqual(mythicTrapSite.chinesePath("/"), "/cn/");
 });
 
 test("WCL 特判将 main-box ID 布局改为 block", () => {
