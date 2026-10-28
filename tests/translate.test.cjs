@@ -23,7 +23,7 @@ test("站点特判模块导出安装入口", () => {
     assert.strictEqual(typeof raiderIoSite.installRaiderIo, "function");
 });
 
-test("WCL 特判将 main-box 布局改为 block", () => {
+test("WCL 特判将 main-box ID 布局改为 block", () => {
     const originalLocation = global.location;
     const originalDocument = global.document;
     const originalAddStyle = global.GM_addStyle;
@@ -35,12 +35,39 @@ test("WCL 特判将 main-box 布局改为 block", () => {
         global.GM_addStyle = (css) => { injectedCss = css; };
         global.setInterval = () => 0;
         warcraftLogsSite.installWarcraftLogs({ autoRedirectWCLCN: false });
-        assert.match(injectedCss, /\.main-box\s*\{\s*display:\s*block !important;/);
+        assert.match(injectedCss, /#main-box\s*\{\s*display:\s*block !important;/);
     } finally {
         global.location = originalLocation;
         global.document = originalDocument;
         global.GM_addStyle = originalAddStyle;
         global.setInterval = originalSetInterval;
+    }
+});
+
+test("Raider.io 特判只处理右侧广告栏", () => {
+    const originalDocument = global.document;
+    const originalMutationObserver = global.MutationObserver;
+    const originalAddStyle = global.GM_addStyle;
+    let injectedCss = "";
+    try {
+        global.document = {
+            readyState: "loading",
+            addEventListener: () => {},
+            documentElement: {},
+        };
+        global.MutationObserver = class {
+            observe() {}
+        };
+        global.GM_addStyle = (css) => { injectedCss = css; };
+        raiderIoSite.installRaiderIo();
+        assert.match(injectedCss, /\.rio-right-pane/);
+        assert.match(injectedCss, /data-rwes-rio-main-layout/);
+        assert.doesNotMatch(injectedCss, /fresnel-container/);
+        assert.doesNotMatch(injectedCss, /\[class\*=/);
+    } finally {
+        global.document = originalDocument;
+        global.MutationObserver = originalMutationObserver;
+        global.GM_addStyle = originalAddStyle;
     }
 });
 
