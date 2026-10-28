@@ -1,0 +1,26 @@
+docs/TODO.md
+  h_1dc22111645538 1-12
+src/content/legacy.cjs
+  h_1dc22111645538 48,717-721,765
+src/content/main.js
+  h_1dc22111645538 29-34
+src/content/sites/mythictrap.cjs
+  h_1dc22111645538 1-39
+src/popup/popup.html
+  h_1dc22111645538 34-39
+src/shared/constants.js
+  h_1dc22111645538 10
+tests/translate.test.cjs
+  h_1dc22111645538 21,29-37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c74133bf6e6e0223d864b434b2c3e1b775c82716",
+  "prompts": {},
+  "humans": {
+    "h_1dc22111645538": {
+      "author": "rodmajors <liangzerui@eccom.com.cn>"
+    }
+  }
+}

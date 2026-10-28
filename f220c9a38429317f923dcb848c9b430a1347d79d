@@ -1,0 +1,22 @@
+src/content/legacy.cjs
+  h_1dc22111645538 43-46,751-754
+src/content/sites/raiderio.cjs
+  h_1dc22111645538 1-21
+src/content/sites/warcraftlogs.cjs
+  h_1dc22111645538 1-38
+src/content/sites/wowhead.cjs
+  h_1dc22111645538 1-56
+tests/translate.test.cjs
+  h_1dc22111645538 16-45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f220c9a38429317f923dcb848c9b430a1347d79d",
+  "prompts": {},
+  "humans": {
+    "h_1dc22111645538": {
+      "author": "rodmajors <liangzerui@eccom.com.cn>"
+    }
+  }
+}

@@ -1,0 +1,20 @@
+src/popup/popup.html
+  h_1dc22111645538 6,13,25,31,41-45,60
+  h_1dc22111645538 3-5,7-12,14-24,26-30,32-40,46-59,61-65
+src/popup/popup.css
+  h_1dc22111645538 8,18,87,112,118
+  h_1dc22111645538 1-7,9-17,19-86,88-111,113-117,119-126
+.hintrc
+  h_1dc22111645538 1-13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7a4a89cde0e575907d3e8157cfa1d03348393964",
+  "prompts": {},
+  "humans": {
+    "h_1dc22111645538": {
+      "author": "rodmajors <liangzerui@eccom.com.cn>"
+    }
+  }
+}

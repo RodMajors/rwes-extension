@@ -1,0 +1,20 @@
+_locales/en/messages.json
+  h_1dc22111645538 1-14
+_locales/zh_CN/messages.json
+  h_1dc22111645538 1-14
+build.mjs
+  h_1dc22111645538 2,31,34
+manifest.base.json
+  h_1dc22111645538 3-5,7,12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9469d3689a0fdc2e15b3a4267d658bfce2b2ce9d",
+  "prompts": {},
+  "humans": {
+    "h_1dc22111645538": {
+      "author": "rodmajors <liangzerui@eccom.com.cn>"
+    }
+  }
+}

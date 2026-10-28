@@ -1,0 +1,24 @@
+src/content/legacy.cjs
+  h_1dc22111645538 49-52,770-776,794
+src/content/sites/icyveins.cjs
+  h_1dc22111645538 1-14
+src/content/sites/keystoneloot.cjs
+  h_1dc22111645538 1-60
+src/content/sites/liquidarmory.cjs
+  h_1dc22111645538 1-40
+src/content/sites/raidbots.cjs
+  h_1dc22111645538 1-7
+tests/translate.test.cjs
+  h_1dc22111645538 22-25,34-61
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "82cdbd36dc44da33d00e8dbe0f51876a2342ecb5",
+  "prompts": {},
+  "humans": {
+    "h_1dc22111645538": {
+      "author": "rodmajors <liangzerui@eccom.com.cn>"
+    }
+  }
+}

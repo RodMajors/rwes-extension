@@ -1,0 +1,16 @@
+manifest.base.json
+  h_1dc22111645538 14
+src/content/legacy.cjs
+  h_1dc22111645538 786-787
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ac82fdf17eaad7d24f68649fdb216b46d0a2ad7e",
+  "prompts": {},
+  "humans": {
+    "h_1dc22111645538": {
+      "author": "rodmajors <liangzerui@eccom.com.cn>"
+    }
+  }
+}
