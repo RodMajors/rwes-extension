@@ -358,6 +358,44 @@ const api = (function () {
         return null;
     }
 
+    function renderSpellDescription(text, spellId, indexes) {
+        const artifact = indexes["spelldescription.json.gz"];
+        const names = indexes["spellname.json.gz"];
+        const values = String(text || "").match(/\[[^\]]+\]|\b\d+(?:\.\d+)?%?\b/g) || [];
+        let valueIndex = 0;
+        const visited = new Set();
+        function render(id) {
+            const key = String(id);
+            if (visited.has(key) || visited.size > 8) return null;
+            const record = artifact && artifact.byId.get(key);
+            const source = record && record.Description && record.Description.zh;
+            if (!source) return null;
+            visited.add(key);
+            const output = renderTemplate(source);
+            visited.delete(key);
+            return output;
+        }
+        function renderTemplate(source) {
+            let out = source;
+            let conditional;
+            while ((conditional = findConditionalPlaceholder(out))) {
+                const branches = conditional.branches;
+                const chosen = branches[0] || branches[1] || "";
+                out = out.slice(0, conditional.start) + chosen + out.slice(conditional.end);
+            }
+            out = out.replace(/\$@(spelldesc|spellname)(\d+)/gi, function (token, kind, refId) {
+                if (kind.toLowerCase() === "spellname") return lookupId(names, refId) || token;
+                return render(refId) || "";
+            });
+            out = out.replace(/\|[cC][0-9a-fA-F]{8}|\|[rR]/g, "");
+            out = out.replace(/\$\{[^{}]*\}(?:\.\d+)?|\$\d+[a-zA-Z]\d*|\$[a-zA-Z]\d*/gi, function () {
+                return values[valueIndex++] || "";
+            });
+            return out.replace(/[ \t]+/g, " ").replace(/ *\n */g, "\n").trim();
+        }
+        return render(spellId);
+    }
+
     function spellDescriptionForId(text, spellId, indexes) {
         const artifact = indexes["spelldescription.json.gz"];
         const record = artifact && artifact.byId.get(String(spellId));
@@ -1135,6 +1173,9 @@ const api = (function () {
             const descriptionTranslator = function (text, spellId) {
                 return spellDescriptionTemplate(text, spellId, dictState.indexes);
             };
+            descriptionTranslator.renderTooltip = function (text, spellId) {
+                return renderSpellDescription(text, spellId, dictState.indexes);
+            };
             descriptionTranslator.resolveTitle = function (title) {
                 return lookupZhIds(dictState.indexes["spellname.json.gz"], title);
             };
@@ -1200,6 +1241,7 @@ const api = (function () {
         listStaleTables: listStaleTables,
         translateText: translateText,
         spellDescriptionTemplate: spellDescriptionTemplate,
+        renderSpellDescription: renderSpellDescription,
         siteDictionaryForHost: siteDictionaryForHost,
         splitSuffix: splitSuffix,
         NAME_BLOCKLIST: NAME_BLOCKLIST,

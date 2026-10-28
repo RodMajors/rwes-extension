@@ -421,6 +421,20 @@ test("spellDescriptionTemplate: 坍缩之星公式分支和多段文本", () => 
     );
 });
 
+test("renderSpellDescription: 直接生成中文说明文本", () => {
+    const indexes = fakeIndexes({ "spelldescription.json.gz": {}, "spellname.json.gz": {} });
+    indexes["spelldescription.json.gz"].byId.set("1217610", {
+        Description: {
+            zh: "吞噬目标的生命精华，造成$s1点宇宙伤害。\n\n可在移动中施放。",
+            en: "Devour the life essence, dealing $s1 Cosmic damage.",
+        },
+    });
+    assert.strictEqual(
+        rwes.renderSpellDescription("Devour the life essence, dealing 367 Cosmic damage.", "1217610", indexes),
+        "吞噬目标的生命精华，造成367点宇宙伤害。\n\n可在移动中施放。",
+    );
+});
+
 test("translateText: full name hit incl specclass", () => {
     const indexes = fakeIndexes({
         "itemsparse.json.gz": { "void sphere": "虚空球" },

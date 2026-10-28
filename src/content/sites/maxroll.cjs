@@ -42,6 +42,21 @@ function translateSpellTooltip(root, translateDescription, activeSpellId) {
         if (id && !spellIds.includes(id)) spellIds.push(id);
     }
     if (!spellIds.length && !triggers.length) return false;
+    if (translateDescription.renderTooltip) {
+        const description = tooltip.querySelector(".mx-color-gold");
+        if (description) {
+            const rendered = translateDescription.renderTooltip(description.textContent || "", spellIds[0]);
+            if (rendered) {
+                description.replaceChildren();
+                const lines = rendered.split(/\n/);
+                lines.forEach((line, index) => {
+                    if (index) description.append(document.createElement("br"));
+                    description.append(document.createTextNode(line));
+                });
+                return true;
+            }
+        }
+    }
     const walker = document.createTreeWalker(tooltip, NodeFilter.SHOW_TEXT);
     const nodes = [];
     while (walker.nextNode()) nodes.push(walker.currentNode);
