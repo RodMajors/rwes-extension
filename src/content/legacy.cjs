@@ -312,11 +312,48 @@ const api = (function () {
 
     function spellDescriptionTemplate(text, spellId, indexes) {
         const artifact = indexes["spelldescription.json.gz"];
+        const candidates = [];
+        const queued = [String(spellId)];
+        const seen = new Set();
+        while (queued.length && seen.size < 32) {
+            const id = queued.shift();
+            if (seen.has(id)) continue;
+            seen.add(id);
+            candidates.push(id);
+            const spell = artifact && artifact.byId.get(id);
+            for (const locale of ["en", "zh"]) {
+                const description = spell && spell.Description && spell.Description[locale];
+                if (!description) continue;
+                for (const match of description.matchAll(/\$@spelldesc(\d+)/gi)) {
+                    if (!seen.has(match[1])) queued.push(match[1]);
+                }
+            }
+        }
+        for (const candidateId of candidates) {
+            const translated = spellDescriptionForId(text, candidateId, indexes);
+            if (translated) return translated;
+        }
+        return null;
+    }
+
+    function spellDescriptionForId(text, spellId, indexes) {
+        const artifact = indexes["spelldescription.json.gz"];
         const record = artifact && artifact.byId.get(String(spellId));
-        if (!record || !record.Description || !record.Description.en || !record.Description.zh) return null;
-        const english = record.Description.en;
-        const chinese = record.Description.zh;
-        const tokenRegex = /\$@spellname\d+|\$\d+s\d+|\$[a-zA-Z]\d*/g;
+        const english = record && record.Description && record.Description.en;
+        const chinese = record && record.Description && record.Description.zh;
+        if (!english || !chinese) return null;
+        const enBlocks = english.split(/\n\s*\n/).map(function (part) { return part.trim(); }).filter(Boolean);
+        const zhBlocks = chinese.split(/\n\s*\n/).map(function (part) { return part.trim(); }).filter(Boolean);
+        for (let block = 0; block < enBlocks.length; block += 1) {
+            const translated = matchSpellDescriptionBlock(text, enBlocks[block], zhBlocks[block], indexes);
+            if (translated) return translated;
+        }
+        return null;
+    }
+
+    function matchSpellDescriptionBlock(text, english, chinese, indexes) {
+        if (!english || !chinese) return null;
+        const tokenRegex = /\$@spellname\d+|\$\d+[a-zA-Z]\d*|\$[a-zA-Z]\d*/gi;
         const tokens = english.match(tokenRegex) || [];
         const zhTokens = chinese.match(tokenRegex) || [];
         const tokenCounts = function (items) {
@@ -1025,8 +1062,9 @@ const api = (function () {
         });
 
         const dictState = { server: CONFIG_TRANSLATE.dictServer, indexes: {} };
+        let maxrollHandlers = null;
         if (host.endsWith("maxroll.gg")) {
-            installMaxroll(function (text, spellId) {
+            maxrollHandlers = installMaxroll(function (text, spellId) {
                 return spellDescriptionTemplate(text, spellId, dictState.indexes);
             }, function (text) {
                 return translateText(text, dictState.indexes);
@@ -1040,6 +1078,7 @@ const api = (function () {
             syncDictionary(dictState)
                 .then(function () {
                     scheduleScan(dictState, 0);
+                    if (maxrollHandlers) maxrollHandlers.scan();
                     const dictObserver = new MutationObserver(function (
                         mutations,
                     ) {

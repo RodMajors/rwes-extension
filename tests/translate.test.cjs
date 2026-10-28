@@ -353,6 +353,30 @@ test("spellDescriptionTemplate: 将已计算英文数值安全套入中文模板
     assert.strictEqual(rwes.spellDescriptionTemplate("Different text", "1228214", indexes), null);
 });
 
+test("spellDescriptionTemplate: 按父技能的 spelldesc 引用匹配嵌套技能段落", () => {
+    const indexes = fakeIndexes({ "spelldescription.json.gz": {}, "spellname.json.gz": {} });
+    indexes["spelldescription.json.gz"].byId.set("471306", {
+        Description: {
+            en: "Collecting $1225789u Soul Fragments grants access to Void Metamorphosis.\n\n$@spellicon1217605 $@spellname1217605\n$@spelldesc1217605",
+            zh: "收集$1225789u个灵魂残片即可使用虚空变形。\n\n$@spellicon1217605 $@spellname1217605\n$@spelldesc1217605",
+        },
+    });
+    indexes["spelldescription.json.gz"].byId.set("1217605", {
+        Description: {
+            en: "You ascend to a higher state of being, substantially empowering your abilities.",
+            zh: "你飞升至更高的境界，大幅强化你的技能。",
+        },
+    });
+    assert.strictEqual(
+        rwes.spellDescriptionTemplate("Collecting 50 Soul Fragments grants access to Void Metamorphosis.", "471306", indexes),
+        "收集50个灵魂残片即可使用虚空变形。",
+    );
+    assert.strictEqual(
+        rwes.spellDescriptionTemplate("You ascend to a higher state of being, substantially empowering your abilities.", "471306", indexes),
+        "你飞升至更高的境界，大幅强化你的技能。",
+    );
+});
+
 test("translateText: full name hit incl specclass", () => {
     const indexes = fakeIndexes({
         "itemsparse.json.gz": { "void sphere": "虚空球" },
