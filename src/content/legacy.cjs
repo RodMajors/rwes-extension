@@ -310,6 +310,60 @@ const api = (function () {
         return out;
     }
 
+    function spellDescriptionTemplate(text, spellId, indexes) {
+        const artifact = indexes["spelldescription.json.gz"];
+        const record = artifact && artifact.byId.get(String(spellId));
+        if (!record || !record.Description || !record.Description.en || !record.Description.zh) return null;
+        const english = record.Description.en;
+        const chinese = record.Description.zh;
+        const tokenRegex = /\$@spellname\d+|\$\d+s\d+|\$[a-zA-Z]\d*/g;
+        const tokens = english.match(tokenRegex) || [];
+        const zhTokens = chinese.match(tokenRegex) || [];
+        const tokenCounts = function (items) {
+            return items.reduce(function (counts, token) {
+                counts[token] = (counts[token] || 0) + 1;
+                return counts;
+            }, {});
+        };
+        const enTokenCounts = tokenCounts(tokens);
+        const zhTokenCounts = tokenCounts(zhTokens);
+        const enTokenKeys = Object.keys(enTokenCounts).sort();
+        const zhTokenKeys = Object.keys(zhTokenCounts).sort();
+        if (enTokenKeys.length !== zhTokenKeys.length || enTokenKeys.some(function (token, i) {
+            return token !== zhTokenKeys[i] || enTokenCounts[token] !== zhTokenCounts[token];
+        })) return null;
+        let pattern = "^";
+        let cursor = 0;
+        const captures = [];
+        let match;
+        tokenRegex.lastIndex = 0;
+        while ((match = tokenRegex.exec(english))) {
+            pattern += escapeRegExp(english.slice(cursor, match.index)) + "(.+?)";
+            captures.push(match[0]);
+            cursor = match.index + match[0].length;
+        }
+        pattern += escapeRegExp(english.slice(cursor)) + "$";
+        const values = new RegExp(pattern, "is").exec(String(text).trim());
+        if (!values) return null;
+        const replacements = new Map();
+        captures.forEach(function (token, i) {
+            if (replacements.has(token) && replacements.get(token) !== values[i + 1]) replacements.set(token, null);
+            else replacements.set(token, values[i + 1]);
+        });
+        if (Array.from(replacements.values()).some(function (value) { return value === null; })) return null;
+        return chinese.replace(tokenRegex, function (token) {
+            const value = replacements.get(token);
+            const nameMatch = /^\$@spellname(\d+)$/.exec(token);
+            if (nameMatch) return lookupId(indexes["spellname.json.gz"], nameMatch[1]) || value;
+            if (token === "$d") return value.replace(/\bsec\b/gi, "秒").replace(/\bmin\b/gi, "分钟").replace(/\s+(秒|分钟)/g, "$1");
+            return value;
+        });
+    }
+
+    function escapeRegExp(value) {
+        return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+
     // ==================== 词典存储与同步(浏览器侧) ====================
 
     const DB_NAME = "rwes-dict";
@@ -448,6 +502,7 @@ const api = (function () {
             const requiredTables = REQUIRED_TABLES.slice();
             const siteDictionary = siteDictionaryForHost(typeof location !== "undefined" ? location.hostname : "");
             if (siteDictionary) requiredTables.push(siteDictionary);
+            if (siteDictionary === "site-maxroll.json.gz") requiredTables.push("spelldescription.json.gz");
             let names = (listing.names || []).filter(function (name) { return requiredTables.includes(name); });
             if (!names.length) {
                 const synced = await chrome.runtime.sendMessage({ type: "sync" });
@@ -801,7 +856,6 @@ const api = (function () {
         if (host.includes("warcraftlogs.com") && installWarcraftLogs(CONFIG)) return;
         if (host.includes("raider.io")) installRaiderIo();
         if (host.includes("wowanalyzer.com")) installWowAnalyzer();
-        if (host.includes("maxroll.gg")) installMaxroll();
         if (host.includes("mythictrap.com") && installMythicTrap(CONFIG)) return;
         if (host.includes("raidbots.com")) installRaidbots();
         if (isLiquidArmoryHost(host)) {
@@ -971,6 +1025,13 @@ const api = (function () {
         });
 
         const dictState = { server: CONFIG_TRANSLATE.dictServer, indexes: {} };
+        if (host.endsWith("maxroll.gg")) {
+            installMaxroll(function (text, spellId) {
+                return spellDescriptionTemplate(text, spellId, dictState.indexes);
+            }, function (text) {
+                return translateText(text, dictState.indexes);
+            });
+        }
 
         if (
             CONFIG_TRANSLATE.translateEnabled &&
@@ -1027,6 +1088,7 @@ const api = (function () {
         diffManifest: diffManifest,
         listStaleTables: listStaleTables,
         translateText: translateText,
+        spellDescriptionTemplate: spellDescriptionTemplate,
         siteDictionaryForHost: siteDictionaryForHost,
         splitSuffix: splitSuffix,
         NAME_BLOCKLIST: NAME_BLOCKLIST,

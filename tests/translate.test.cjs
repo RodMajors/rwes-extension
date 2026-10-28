@@ -334,6 +334,25 @@ test("站点专属词典可按 hostname 精确选择并覆盖全局词条", () =
     }
 });
 
+test("spellDescriptionTemplate: 将已计算英文数值安全套入中文模板", () => {
+    const indexes = fakeIndexes({
+        "spelldescription.json.gz": {},
+        "spellname.json.gz": {},
+    });
+    indexes["spellname.json.gz"].byId.set("1228211", "奥术宝珠");
+    indexes["spelldescription.json.gz"].byId.set("1228214", {
+        Description: {
+            en: "Deals $1244998s1 Arcane damage every $t1 sec for $d. Summons $@spellname1228211.",
+            zh: "每$t1秒造成$1244998s1点奥术伤害，持续$d。召唤$@spellname1228211。",
+        },
+    });
+    assert.strictEqual(
+        rwes.spellDescriptionTemplate("Deals 100 Arcane damage every 2 sec for 10 sec. Summons Arcane Orb.", "1228214", indexes),
+        "每2秒造成100点奥术伤害，持续10秒。召唤奥术宝珠。",
+    );
+    assert.strictEqual(rwes.spellDescriptionTemplate("Different text", "1228214", indexes), null);
+});
+
 test("translateText: full name hit incl specclass", () => {
     const indexes = fakeIndexes({
         "itemsparse.json.gz": { "void sphere": "虚空球" },

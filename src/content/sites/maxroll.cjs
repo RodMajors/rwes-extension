@@ -24,11 +24,60 @@ function dismissAdblockPrompt() {
     return true;
 }
 
-function installMaxroll() {
-    GM_addStyle('[data-rwes-maxroll-adblock-prompt] { display: none !important; }');
-    dismissAdblockPrompt();
-    const observer = new MutationObserver(dismissAdblockPrompt);
-    observer.observe(document.documentElement, { childList: true, subtree: true });
+function translateSpellTooltip(root, translateDescription) {
+    const scope = root || document;
+    const trigger = scope.querySelector(".wow-spell:hover[data-wow-id], .wow-spell:focus[data-wow-id]") ||
+        document.querySelector(".wow-spell:hover[data-wow-id], .wow-spell:focus[data-wow-id]");
+    if (!trigger) return false;
+    const tooltip = scope.querySelector(".mxt-Tooltip") || document.querySelector(".mxt-Tooltip");
+    if (!tooltip) return false;
+    if (tooltip.getAttribute("data-rwes-spell-translation") === trigger.getAttribute("data-wow-id")) return false;
+    const walker = document.createTreeWalker(tooltip, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    let translated = false;
+    for (const node of nodes) {
+        const original = node.nodeValue.trim();
+        const replacement = translateDescription(original, trigger.getAttribute("data-wow-id"));
+        if (replacement && replacement !== original) {
+            node.nodeValue = node.nodeValue.replace(original, replacement);
+            translated = true;
+        }
+    }
+    if (!translated) return false;
+    tooltip.setAttribute("data-rwes-spell-translation", trigger.getAttribute("data-wow-id"));
+    return true;
 }
 
-module.exports = { installMaxroll, dismissAdblockPrompt };
+function translateTooltipLabels(root, translateText) {
+    const tooltip = (root || document).querySelector(".mxt-Tooltip") || document.querySelector(".mxt-Tooltip");
+    if (!tooltip) return 0;
+    const walker = document.createTreeWalker(tooltip, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    let count = 0;
+    for (const node of nodes) {
+        const original = node.nodeValue;
+        const translated = translateText(original.trim());
+        if (translated && translated !== original.trim()) {
+            node.nodeValue = original.replace(original.trim(), translated);
+            count += 1;
+        }
+    }
+    return count;
+}
+
+function installMaxroll(translateDescription, translateText) {
+    GM_addStyle('[data-rwes-maxroll-adblock-prompt] { display: none !important; }');
+    dismissAdblockPrompt();
+    const observer = new MutationObserver(() => {
+        dismissAdblockPrompt();
+        if (translateText) translateTooltipLabels(document, translateText);
+        if (translateDescription) translateSpellTooltip(document, translateDescription);
+    });
+    observer.observe(document.documentElement, { childList: true, characterData: true, subtree: true });
+    if (translateText) translateTooltipLabels(document, translateText);
+    if (translateDescription) translateSpellTooltip(document, translateDescription);
+}
+
+module.exports = { installMaxroll, dismissAdblockPrompt, translateSpellTooltip, translateTooltipLabels };
