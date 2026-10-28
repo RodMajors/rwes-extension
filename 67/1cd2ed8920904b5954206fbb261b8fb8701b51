@@ -1,0 +1,14 @@
+src/background/entry.js
+  h_745ff005454789 10,25-36,55-62,97-98
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "671cd2ed8920904b5954206fbb261b8fb8701b51",
+  "prompts": {},
+  "humans": {
+    "h_745ff005454789": {
+      "author": "RodMajors <pro-vana@outlook.com>"
+    }
+  }
+}
