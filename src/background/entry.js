@@ -7,6 +7,7 @@ globalThis.chrome = browser;
 
 let syncPromise = null;
 let clearPromise = null;
+const INITIAL_SYNC_PENDING = "initialSyncPending";
 
 async function runSync() {
   if (clearPromise) await clearPromise;
@@ -19,6 +20,18 @@ async function runSync() {
     })().finally(() => { syncPromise = null; });
   }
   return syncPromise;
+}
+
+async function runInitialSync() {
+  await browser.storage.local.set({ [INITIAL_SYNC_PENDING]: true });
+  try {
+    const result = await runSync();
+    await browser.storage.local.set({ [INITIAL_SYNC_PENDING]: false });
+    return result;
+  } catch (error) {
+    // 保留 pending 标记,由下次启动或页面打开继续重试。
+    throw error;
+  }
 }
 
 function toBase64(bytes) {
@@ -39,8 +52,14 @@ async function sendDictionary(message, sendResponse) {
   sendResponse({ ok: true, meta, files });
 }
 
-chrome.runtime.onInstalled.addListener(() => { void runSync().catch((error) => console.warn("[RWES] initial sync failed", error)); });
-chrome.runtime.onStartup?.addListener(() => { void runSync().catch((error) => console.warn("[RWES] startup sync failed", error)); });
+chrome.runtime.onInstalled.addListener(() => {
+  void runInitialSync().catch((error) => console.warn("[RWES] initial sync failed", error));
+});
+chrome.runtime.onStartup?.addListener(() => {
+  browser.storage.local.get(INITIAL_SYNC_PENDING)
+    .then((state) => state[INITIAL_SYNC_PENDING] ? runInitialSync() : runSync())
+    .catch((error) => console.warn("[RWES] startup sync failed", error));
+});
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.type === "sync") {
     runSync().then((stats) => sendResponse({ ok: true, stats })).catch((error) => sendResponse({ ok: false, error: error.message }));
@@ -75,8 +94,8 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     return true;
   }
   if (message?.type === "sync-if-empty") {
-    readMeta().then(async (meta) => {
-      if (!meta) return { stats: await runSync() };
+    Promise.all([readMeta(), browser.storage.local.get(INITIAL_SYNC_PENDING)]).then(async ([meta, state]) => {
+      if (!meta || state[INITIAL_SYNC_PENDING] === true) return { stats: await runInitialSync() };
       const lastCheck = Date.parse(meta.syncedAt || "");
       if (!Number.isFinite(lastCheck) || Date.now() - lastCheck > 24 * 60 * 60 * 1000) {
         try { return { stats: await runSync() }; }
