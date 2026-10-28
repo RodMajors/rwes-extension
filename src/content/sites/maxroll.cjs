@@ -37,8 +37,8 @@ function translateSpellTooltip(root, translateDescription, activeSpellId) {
         ? translateDescription.resolveTitle(title.textContent.trim())
         : null;
     const spellIds = [];
-    if (titleSpellId) spellIds.push(titleSpellId);
     if (activeSpellId && !activeSpellId.includes(":") && !spellIds.includes(activeSpellId)) spellIds.push(activeSpellId);
+    if (titleSpellId && !spellIds.includes(titleSpellId)) spellIds.push(titleSpellId);
     if (!spellIds.length && !triggers.length) return false;
     const walker = document.createTreeWalker(tooltip, NodeFilter.SHOW_TEXT);
     const nodes = [];

@@ -226,6 +226,11 @@ test("parseArtifact + lookupZhId: 中文标题可反查法术 ID", () => {
     assert.strictEqual(rwes.lookupZhId(index, "未知技能"), null);
 });
 
+test("lookupZhId: 同名技能保持首个 ID 作为标题兜底", () => {
+    const index = rwes.parseArtifact({ id: { "1217610": "吞噬", "473662": "吞噬" }, en: {} });
+    assert.ok(["1217610", "473662"].includes(rwes.lookupZhId(index, "吞噬")));
+});
+
 test("lookupEn: case-insensitive, minLen, miss", () => {
     const idx = rwes.parseArtifact({ id: {}, en: { "fireball": "火球术" } });
     assert.strictEqual(rwes.lookupEn(idx, "  Fireball ", 3), "火球术");
@@ -380,6 +385,24 @@ test("spellDescriptionTemplate: 按父技能的 spelldesc 引用匹配嵌套技�
     assert.strictEqual(
         rwes.spellDescriptionTemplate("You ascend to a higher state of being, substantially empowering your abilities.", "471306", indexes),
         "你飞升至更高的境界，大幅强化你的技能。",
+    );
+});
+
+test("spellDescriptionTemplate: 支持公式和条件占位符", () => {
+    const indexes = fakeIndexes({ "spelldescription.json.gz": {}, "spellname.json.gz": {} });
+    indexes["spelldescription.json.gz"].byId.set("1217610", {
+        Description: {
+            en: "Devour the life essence, dealing $s1 Cosmic damage. Reduces cooldown by ${$1217607s14/1000}.1 sec.\n\n|CFFffffffGenerates $1288123s1 Fury$?a1215617[ and $1227619s3 soul fragments][].|R",
+            zh: "吞噬生命精华，造成$s1点宇宙伤害。使冷却时间缩短${$1217607s14/1000}.1秒。\n\n|CFFffffff产生$1288123s1点恶魔之怒$?a1215617[和$1227619s3个灵魂残片][]。|R",
+        },
+    });
+    assert.strictEqual(
+        rwes.spellDescriptionTemplate("Devour the life essence, dealing 367 Cosmic damage. Reduces cooldown by 1.0 sec.", "1217610", indexes),
+        "吞噬生命精华，造成367点宇宙伤害。使冷却时间缩短1.0秒。",
+    );
+    assert.strictEqual(
+        rwes.spellDescriptionTemplate("Generates 16 Fury.", "1217610", indexes),
+        "产生16点恶魔之怒。",
     );
 });
 

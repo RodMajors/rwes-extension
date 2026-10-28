@@ -365,44 +365,43 @@ const api = (function () {
 
     function matchSpellDescriptionBlock(text, english, chinese, indexes) {
         if (!english || !chinese) return null;
-        const tokenRegex = /\$@spellname\d+|\$\d+[a-zA-Z]\d*|\$[a-zA-Z]\d*/gi;
-        const tokens = english.match(tokenRegex) || [];
-        const zhTokens = chinese.match(tokenRegex) || [];
-        const tokenCounts = function (items) {
-            return items.reduce(function (counts, token) {
-                counts[token] = (counts[token] || 0) + 1;
-                return counts;
-            }, {});
-        };
-        const enTokenCounts = tokenCounts(tokens);
-        const zhTokenCounts = tokenCounts(zhTokens);
-        const enTokenKeys = Object.keys(enTokenCounts).sort();
-        const zhTokenKeys = Object.keys(zhTokenCounts).sort();
-        if (enTokenKeys.length !== zhTokenKeys.length || enTokenKeys.some(function (token, i) {
-            return token !== zhTokenKeys[i] || enTokenCounts[token] !== zhTokenCounts[token];
-        })) return null;
+        english = english.replace(/\|[cC][0-9a-fA-F]{8}|\|[rR]/g, "").trim();
+        chinese = chinese.replace(/\|[cC][0-9a-fA-F]{8}|\|[rR]/g, "").trim();
+        const tokenRegex = /\$\{[^{}]*\}(?:\.\d+)?|\$\?[^[]+(?:\[[^\]]*\]){2}|\$@[a-z]+\d+|\$\d+[a-zA-Z]\d*|\$[a-zA-Z]\d*/gi;
+        const tokens = [];
+        let tokenMatch;
+        tokenRegex.lastIndex = 0;
+        while ((tokenMatch = tokenRegex.exec(english))) tokens.push(tokenMatch[0]);
+        const zhTokens = [];
+        tokenRegex.lastIndex = 0;
+        while ((tokenMatch = tokenRegex.exec(chinese))) zhTokens.push(tokenMatch[0]);
+        if (tokens.length !== zhTokens.length) return null;
         let pattern = "^";
         let cursor = 0;
         const captures = [];
         let match;
         tokenRegex.lastIndex = 0;
         while ((match = tokenRegex.exec(english))) {
-            pattern += escapeRegExp(english.slice(cursor, match.index)) + "(.+?)";
-            captures.push(match[0]);
+            pattern += escapeRegExp(english.slice(cursor, match.index)) + (match[0].startsWith("$?") ? "(?:.*?)?" : "(.+?)");
+            if (!match[0].startsWith("$?")) captures.push(match[0]);
             cursor = match.index + match[0].length;
         }
         pattern += escapeRegExp(english.slice(cursor)) + "$";
         const values = new RegExp(pattern, "is").exec(String(text).trim());
         if (!values) return null;
         const replacements = new Map();
+        let replacementIndex = 0;
         captures.forEach(function (token, i) {
-            if (replacements.has(token) && replacements.get(token) !== values[i + 1]) replacements.set(token, null);
-            else replacements.set(token, values[i + 1]);
+            const key = token.toLowerCase();
+            const queue = replacements.get(key) || [];
+            queue.push(values[i + 1] || "");
+            replacements.set(key, queue);
         });
-        if (Array.from(replacements.values()).some(function (value) { return value === null; })) return null;
         return chinese.replace(tokenRegex, function (token) {
-            const value = replacements.get(token);
-            const nameMatch = /^\$@spellname(\d+)$/.exec(token);
+            if (token.startsWith("$?")) return "";
+            const queue = replacements.get(token.toLowerCase());
+            const value = queue && queue.length ? queue.shift() : (values[++replacementIndex] || "");
+            const nameMatch = /^\$@spellname(\d+)$/i.exec(token);
             if (nameMatch) return lookupId(indexes["spellname.json.gz"], nameMatch[1]) || value;
             if (token === "$d") return value.replace(/\bsec\b/gi, "秒").replace(/\bmin\b/gi, "分钟").replace(/\s+(秒|分钟)/g, "$1");
             return value;
