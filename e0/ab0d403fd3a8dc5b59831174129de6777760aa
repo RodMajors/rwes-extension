@@ -1,0 +1,20 @@
+src/content/legacy.cjs
+  h_1dc22111645538 46-47,757-758
+src/content/sites/maxroll.cjs
+  h_1dc22111645538 1-34
+src/content/sites/wowanalyzer.cjs
+  h_1dc22111645538 1-23
+tests/translate.test.cjs
+  h_1dc22111645538 19-20,26-27,78-112
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e0ab0d403fd3a8dc5b59831174129de6777760aa",
+  "prompts": {},
+  "humans": {
+    "h_1dc22111645538": {
+      "author": "rodmajors <liangzerui@eccom.com.cn>"
+    }
+  }
+}
