@@ -13,6 +13,36 @@ test("RWES.js requires without executing browser code", () => {
 });
 
 const rwes = require("../src/content/legacy.cjs");
+const wowheadSite = require("../src/content/sites/wowhead.cjs");
+const warcraftLogsSite = require("../src/content/sites/warcraftlogs.cjs");
+const raiderIoSite = require("../src/content/sites/raiderio.cjs");
+
+test("站点特判模块导出安装入口", () => {
+    assert.strictEqual(typeof wowheadSite.installWowhead, "function");
+    assert.strictEqual(typeof warcraftLogsSite.installWarcraftLogs, "function");
+    assert.strictEqual(typeof raiderIoSite.installRaiderIo, "function");
+});
+
+test("WCL 特判将 main-box 布局改为 block", () => {
+    const originalLocation = global.location;
+    const originalDocument = global.document;
+    const originalAddStyle = global.GM_addStyle;
+    const originalSetInterval = global.setInterval;
+    let injectedCss = "";
+    try {
+        global.location = { hostname: "cn.warcraftlogs.com", href: "https://cn.warcraftlogs.com/" };
+        global.document = { readyState: "loading", addEventListener: () => {} };
+        global.GM_addStyle = (css) => { injectedCss = css; };
+        global.setInterval = () => 0;
+        warcraftLogsSite.installWarcraftLogs({ autoRedirectWCLCN: false });
+        assert.match(injectedCss, /\.main-box\s*\{\s*display:\s*block !important;/);
+    } finally {
+        global.location = originalLocation;
+        global.document = originalDocument;
+        global.GM_addStyle = originalAddStyle;
+        global.setInterval = originalSetInterval;
+    }
+});
 
 test("diffManifest: no changes", () => {
     const local = { version: "v1", files: { "items.json.gz": "a1" } };

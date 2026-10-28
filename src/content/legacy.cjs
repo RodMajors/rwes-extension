@@ -40,6 +40,10 @@
 // @updateURL https://update.greasyfork.org/scripts/602426/%E3%80%90RodMajors%E3%80%91%E9%AD%94%E5%85%BD%E4%B8%96%E7%95%8C%E5%B8%B8%E7%94%A8%E7%BD%91%E7%AB%99%E4%B8%AD%E6%96%87%E7%94%A8%E6%88%B7%E4%BD%93%E9%AA%8C%E5%A2%9E%E5%BC%BA%20%28Wowhead%20%20WCL%20%20Raiderio%20%E7%AD%89%29.meta.js
 // ==/UserScript==
 
+const { installWowhead } = require("./sites/wowhead.cjs");
+const { installWarcraftLogs } = require("./sites/warcraftlogs.cjs");
+const { installRaiderIo } = require("./sites/raiderio.cjs");
+
 const api = (function () {
     "use strict";
 
@@ -743,175 +747,11 @@ const api = (function () {
         );
 
         const host = location.hostname;
-        const path = location.pathname;
-        const href = location.href;
 
-        // ==================== 1 & 3. Wowhead 相关 ====================
-        if (host.includes("wowhead.com")) {
-            // 3. 自动跳转简中页面(可选)
-            if (CONFIG.autoRedirectWowheadCN) {
-                const isTest = /\/(beta|ptr|ptr-2|alpha)(\/|$)/i.test(path);
-                const alreadyCN =
-                    /\/cn(\/|$)/i.test(path) || host.startsWith("cn.");
-                if (!alreadyCN && (!isTest || CONFIG.forceTestToCN)) {
-                    let newPath = path
-                        .replace(
-                            /\/(tw|de|es|mx|fr|it|pt|ru|ko|cn)(\/|$)/i,
-                            "/cn$2",
-                        )
-                        .replace(/\/(beta|ptr|ptr-2|alpha)(\/|$)/i, "/cn$2");
-                    if (!/\/cn(\/|$)/i.test(newPath)) {
-                        // 没有语言段时插入 /cn
-                        newPath = newPath.replace(
-                            /^(\/(?:classic|sod|cata|mop|tbc|wrath)?)?(\/|$)/,
-                            "$1/cn$2",
-                        );
-                    }
-                    // 规范化成 www.wowhead.com/cn/...
-                    const newUrl =
-                        location.origin.replace(
-                            /^(https?:\/\/)(?:[a-z]{2}\.)?/,
-                            "$1www.",
-                        ) +
-                        newPath +
-                        location.search +
-                        location.hash;
-                    if (newUrl !== href) {
-                        location.replace(newUrl);
-                        return;
-                    }
-                }
-            }
-
-            // Wowhead 特判：#main 的直属 div 中只保留主内容，去掉广告、侧栏和控制区。
-            GM_addStyle(`
-                div#main {
-                    display: block !important;
-                    grid-template-columns: none !important;
-                }
-                div#main > div:not(.main-contents) {
-                    display: none !important;
-                }
-                div#main > div.main-contents {
-                    display: block !important;
-                    width: 100% !important;
-                    max-width: none !important;
-                    min-width: 0 !important;
-                    grid-column: 1 / -1 !important;
-                }
-            `);
-
-            const pruneWowheadMain = (main) => {
-                Array.from(main.children).forEach((child) => {
-                    if (
-                        child.tagName === "DIV" &&
-                        !child.classList.contains("main-contents")
-                    ) {
-                        child.remove();
-                    }
-                });
-            };
-
-            const installWowheadMainCleanup = () => {
-                const main = document.querySelector("div#main");
-                if (!main) return false;
-                pruneWowheadMain(main);
-                const mainObserver = new MutationObserver(() => {
-                    pruneWowheadMain(main);
-                });
-                mainObserver.observe(main, { childList: true });
-                return true;
-            };
-
-            if (!installWowheadMainCleanup()) {
-                const mainLookupObserver = new MutationObserver(() => {
-                    if (installWowheadMainCleanup()) {
-                        mainLookupObserver.disconnect();
-                    }
-                });
-                mainLookupObserver.observe(document.documentElement, {
-                    childList: true,
-                    subtree: true,
-                });
-            }
-        }
-
-        // ==================== 2 & 4. WCL (Warcraft Logs) ====================
-        if (host.includes("warcraftlogs.com")) {
-            // 4. 自动跳转 cn 子域名(强化版)
-            if (CONFIG.autoRedirectWCLCN) {
-                // 已经是 cn 开头则跳过
-                if (!host.startsWith("cn.")) {
-                    // 特殊版本子域名保留(classic / vanilla / season 等),不强制跳
-                    const isSpecial =
-                        /^(classic|vanilla|season|ptr|beta)\./i.test(host) ||
-                        host.includes(".classic.") ||
-                        host.includes(".vanilla.");
-
-                    if (!isSpecial) {
-                        // 把 www. / 其他语言子域名 统一替换成 cn.
-                        // 例如:www.warcraftlogs.com → cn.warcraftlogs.com
-                        //      de.warcraftlogs.com → cn.warcraftlogs.com
-                        const newHost = host.replace(
-                            /^(www\.|[a-z]{2}\.)?/,
-                            "cn.",
-                        );
-                        const newUrl = location.href.replace(host, newHost);
-                        if (newUrl !== href) {
-                            location.replace(newUrl);
-                            return;
-                        }
-                    }
-                }
-            }
-
-            // 2. 去广告
-            const wclAdCSS = `
-            #right-ad-box, #top-banner, #bottom-banner, #google-center-div,
-            .adsbygoogle, [id*="ad-"], [class*="ad-box"], [class*="advertisement"] {
-                display: none !important;
-                visibility: hidden !important;
-                width: 0 !important;
-                height: 0 !important;
-            }
-        `;
-            GM_addStyle(wclAdCSS);
-
-            const removeWCLAds = () => {
-                [
-                    "#right-ad-box",
-                    "#top-banner",
-                    "#bottom-banner",
-                    "#google-center-div",
-                    ".adsbygoogle",
-                ].forEach((sel) =>
-                    document.querySelectorAll(sel).forEach((el) => el.remove()),
-                );
-            };
-            document.addEventListener("DOMContentLoaded", removeWCLAds);
-            setInterval(removeWCLAds, 1500);
-        }
-
-        // ==================== 5. Raider.io 去广告 ====================
-        if (host.includes("raider.io")) {
-            const rioAdCSS = `
-            .rio-right-pane, [class*="ad-"], [class*="Advertisement"],
-            .fresnel-container, [class*="slds-size--1-of-1"] > div[class*="fresnel"],
-            .text-white > .slds-m-bottom--large {
-                display: none !important;
-            }
-        `;
-            GM_addStyle(rioAdCSS);
-            const removeRioAds = () => {
-                document
-                    .querySelectorAll(
-                        '.rio-right-pane, [class*="ad-"], .fresnel-container',
-                    )
-                    .forEach((el) => el.remove());
-            };
-            document.addEventListener("DOMContentLoaded", removeRioAds);
-            setInterval(removeRioAds, 2000);
-        }
+        // ==================== 各站点特判 ====================
+        if (host.includes("wowhead.com") && installWowhead(CONFIG)) return;
+        if (host.includes("warcraftlogs.com") && installWarcraftLogs(CONFIG)) return;
+        if (host.includes("raider.io")) installRaiderIo();
 
         // ==================== 6. 全站 Wowhead 链接 + 鼠标提示强制简中 ====================
         // 设置全局 tooltip 域名为简中
