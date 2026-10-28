@@ -1,0 +1,36 @@
+src/content/legacy.cjs
+  h_745ff005454789 463,478,741,877,880,897,945,970
+src/content/main.js
+  h_745ff005454789 7,13,15,30
+src/content/sites/icyveins.cjs
+  h_745ff005454789 34
+src/content/sites/maxroll.cjs
+  h_745ff005454789 102
+src/content/sites/murlok.cjs
+  h_745ff005454789 16
+src/content/sites/mythictrap.cjs
+  h_745ff005454789 28
+src/content/sites/raidbots.cjs
+  h_745ff005454789 4
+src/content/sites/raiderio.cjs
+  h_745ff005454789 12
+src/content/sites/warcraftlogs.cjs
+  h_745ff005454789 23
+src/content/sites/wowanalyzer.cjs
+  h_745ff005454789 15
+src/content/sites/wowhead.cjs
+  h_745ff005454789 41
+tests/translate.test.cjs
+  h_745ff005454789 81,87,94,102,113,122
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9f68b9c0714472c5a268086b66fcb98f12f21463",
+  "prompts": {},
+  "humans": {
+    "h_745ff005454789": {
+      "author": "RodMajors <pro-vana@outlook.com>"
+    }
+  }
+}
