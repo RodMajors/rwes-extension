@@ -108,6 +108,35 @@ const api = (function () {
         "custom",
     ])).map(function (name) { return name + ".json.gz"; });
 
+    const SITE_DICTIONARIES = {
+        "maxroll.gg": "site-maxroll.json.gz",
+        "icy-veins.com": "site-icy-veins.json.gz",
+        "warcraftlogs.com": "site-warcraftlogs.json.gz",
+        "raider.io": "site-raiderio.json.gz",
+        "wowanalyzer.com": "site-wowanalyzer.json.gz",
+        "mythictrap.com": "site-mythictrap.json.gz",
+        "raidbots.com": "site-raidbots.json.gz",
+        "liquidarmory.com": "site-liquidarmory.json.gz",
+        "keystoneloot.io": "site-keystoneloot.json.gz",
+        "murlok.io": "site-murlok.json.gz",
+        "archon.gg": "site-archon.json.gz",
+        "mythicstats.com": "site-mythicstats.json.gz",
+        "wipefest.gg": "site-wipefest.json.gz",
+        "bloodmallet.com": "site-bloodmallet.json.gz",
+        "questionablyepic.com": "site-questionablyepic.json.gz",
+        "simulationcraft.org": "site-simulationcraft.json.gz",
+        "wowhead.com": "site-wowhead.json.gz",
+        "lorrgs.io": "site-lorrgs.json.gz",
+    };
+
+    function siteDictionaryForHost(hostname) {
+        const host = String(hostname || "").toLowerCase();
+        const suffix = Object.keys(SITE_DICTIONARIES).find(function (domain) {
+            return host === domain || host.endsWith("." + domain);
+        });
+        return suffix ? SITE_DICTIONARIES[suffix] : null;
+    }
+
     function diffManifest(localMeta, remote) {
         const toDownload = [];
         for (const f of remote.files || []) {
@@ -247,9 +276,12 @@ const api = (function () {
         const t = String(text).trim();
         if (!t || t.length < 3 || /[\u4e00-\u9fff]/.test(t)) return null;
 
-        // 1) custom UI 词条(custom.json.gz 上线后生效,minLen 2)
-        let out = lookupEn(indexes["custom.json.gz"], t, 2);
-        // 2) 全名查找(物品/法术/地图/…含 specclass 组合词,minLen 3;黑名单品牌词跳过)
+        // 1) 当前站点专属词条优先于全局词条,允许相同英文在不同站点采用不同译法。
+        const siteDictionary = siteDictionaryForHost(typeof location !== "undefined" ? location.hostname : "");
+        let out = siteDictionary ? lookupEn(indexes[siteDictionary], t, 2) : null;
+        // 2) 通用 UI 词条
+        if (!out) out = lookupEn(indexes["custom.json.gz"], t, 2);
+        // 3) 全名查找(物品/法术/地图/…含 specclass 组合词,minLen 3;黑名单品牌词跳过)
         if (!out && !NAME_BLOCKLIST.has(t.toLowerCase()))
             out = findNameZh(indexes, t, 3);
         // 3) 后缀拆分:"Name (Crit)" -> "名称(暴击)"
@@ -413,13 +445,16 @@ const api = (function () {
             if (!syncState || !syncState.ok) throw new Error((syncState && syncState.error) || "dictionary check failed");
             let listing = await chrome.runtime.sendMessage({ type: "dictionary-names" });
             if (!listing || !listing.ok) throw new Error((listing && listing.error) || "dictionary unavailable");
-            let names = (listing.names || []).filter(function (name) { return REQUIRED_TABLES.includes(name); });
+            const requiredTables = REQUIRED_TABLES.slice();
+            const siteDictionary = siteDictionaryForHost(typeof location !== "undefined" ? location.hostname : "");
+            if (siteDictionary) requiredTables.push(siteDictionary);
+            let names = (listing.names || []).filter(function (name) { return requiredTables.includes(name); });
             if (!names.length) {
                 const synced = await chrome.runtime.sendMessage({ type: "sync" });
                 if (!synced || !synced.ok) throw new Error((synced && synced.error) || "dictionary sync failed");
                 listing = await chrome.runtime.sendMessage({ type: "dictionary-names" });
                 if (!listing || !listing.ok) throw new Error("dictionary unavailable");
-                names = (listing.names || []).filter(function (name) { return REQUIRED_TABLES.includes(name); });
+                names = (listing.names || []).filter(function (name) { return requiredTables.includes(name); });
             }
             for (let i = 0; i < names.length; i += 1) {
                 const batch = [names[i]];
@@ -992,6 +1027,7 @@ const api = (function () {
         diffManifest: diffManifest,
         listStaleTables: listStaleTables,
         translateText: translateText,
+        siteDictionaryForHost: siteDictionaryForHost,
         splitSuffix: splitSuffix,
         NAME_BLOCKLIST: NAME_BLOCKLIST,
         SUFFIX_CN: SUFFIX_CN,

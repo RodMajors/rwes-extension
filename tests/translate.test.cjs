@@ -316,6 +316,24 @@ test("translateText: custom UI dict hit", () => {
     assert.strictEqual(rwes.translateText("Timewalking", indexes), "时光漫游");
 });
 
+test("站点专属词典可按 hostname 精确选择并覆盖全局词条", () => {
+    assert.strictEqual(rwes.siteDictionaryForHost("maxroll.gg"), "site-maxroll.json.gz");
+    assert.strictEqual(rwes.siteDictionaryForHost("www.maxroll.gg"), "site-maxroll.json.gz");
+    assert.strictEqual(rwes.siteDictionaryForHost("notmaxroll.gg"), null);
+    const previousLocation = global.location;
+    global.location = { hostname: "www.maxroll.gg" };
+    try {
+        const indexes = fakeIndexes({
+            "site-maxroll.json.gz": { instant: "瞬发" },
+            "custom.json.gz": { instant: "立即" },
+        });
+        assert.strictEqual(rwes.translateText("Instant", indexes), "瞬发");
+    } finally {
+        if (previousLocation === undefined) delete global.location;
+        else global.location = previousLocation;
+    }
+});
+
 test("translateText: full name hit incl specclass", () => {
     const indexes = fakeIndexes({
         "itemsparse.json.gz": { "void sphere": "虚空球" },
