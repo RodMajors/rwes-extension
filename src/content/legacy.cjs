@@ -46,6 +46,10 @@ const { installRaiderIo } = require("./sites/raiderio.cjs");
 const { installWowAnalyzer } = require("./sites/wowanalyzer.cjs");
 const { installMaxroll } = require("./sites/maxroll.cjs");
 const { installMythicTrap } = require("./sites/mythictrap.cjs");
+const { installRaidbots } = require("./sites/raidbots.cjs");
+const { isLiquidArmoryHost, installLiquidArmory } = require("./sites/liquidarmory.cjs");
+const { installIcyVeins } = require("./sites/icyveins.cjs");
+const { installKeystoneLoot } = require("./sites/keystoneloot.cjs");
 
 const api = (function () {
     "use strict";
@@ -763,6 +767,13 @@ const api = (function () {
         if (host.includes("wowanalyzer.com")) installWowAnalyzer();
         if (host.includes("maxroll.gg")) installMaxroll();
         if (host.includes("mythictrap.com") && installMythicTrap(CONFIG)) return;
+        if (host.includes("raidbots.com")) installRaidbots();
+        if (isLiquidArmoryHost(host)) {
+            // LiquidArmory 使用 ptr-2 Wowhead 链接，强制转换到简中正式路径。
+            installLiquidArmory();
+        }
+        if (host.includes("icy-veins.com")) installIcyVeins();
+        if (host.includes("keystoneloot.io")) installKeystoneLoot();
 
         // ==================== 6. 全站 Wowhead 链接 + 鼠标提示强制简中 ====================
         // 设置全局 tooltip 域名为简中
@@ -780,7 +791,7 @@ const api = (function () {
             // 测试服特殊处理
             const testRegex = /wowhead\.com\/(beta|ptr|ptr-2|alpha)(\/|$)/i;
             if (testRegex.test(url)) {
-                if (CONFIG.forceTestToCN) {
+                if (CONFIG.forceTestToCN || isLiquidArmoryHost(host)) {
                     url = url.replace(testRegex, "wowhead.com/cn$2");
                 } else {
                     return url;

@@ -19,6 +19,10 @@ const raiderIoSite = require("../src/content/sites/raiderio.cjs");
 const wowAnalyzerSite = require("../src/content/sites/wowanalyzer.cjs");
 const maxrollSite = require("../src/content/sites/maxroll.cjs");
 const mythicTrapSite = require("../src/content/sites/mythictrap.cjs");
+const raidbotsSite = require("../src/content/sites/raidbots.cjs");
+const liquidArmorySite = require("../src/content/sites/liquidarmory.cjs");
+const icyVeinsSite = require("../src/content/sites/icyveins.cjs");
+const keystoneLootSite = require("../src/content/sites/keystoneloot.cjs");
 
 test("站点特判模块导出安装入口", () => {
     assert.strictEqual(typeof wowheadSite.installWowhead, "function");
@@ -27,6 +31,34 @@ test("站点特判模块导出安装入口", () => {
     assert.strictEqual(typeof wowAnalyzerSite.installWowAnalyzer, "function");
     assert.strictEqual(typeof maxrollSite.installMaxroll, "function");
     assert.strictEqual(typeof mythicTrapSite.installMythicTrap, "function");
+    assert.strictEqual(typeof raidbotsSite.installRaidbots, "function");
+    assert.strictEqual(typeof icyVeinsSite.installIcyVeins, "function");
+    assert.strictEqual(typeof keystoneLootSite.installKeystoneLoot, "function");
+    assert.strictEqual(liquidArmorySite.isLiquidArmoryHost("liquidarmory.com"), true);
+    assert.strictEqual(liquidArmorySite.isLiquidArmoryHost("www.liquidarmory.com"), true);
+    assert.strictEqual(liquidArmorySite.isLiquidArmoryHost("example.com"), false);
+    assert.strictEqual(typeof liquidArmorySite.installLiquidArmory, "function");
+    const style = {};
+    const originalDocument = global.document;
+    const originalWindow = global.window;
+    const anchor = {
+        getBoundingClientRect: () => ({ left: 100, right: 200, top: 100, width: 100, height: 40 }),
+    };
+    const tooltip = {
+        getBoundingClientRect: () => ({ width: 300, height: 200 }),
+        style: { setProperty: (key, value) => { style[key] = value; } },
+    };
+    try {
+        global.document = { documentElement: { clientWidth: 1280, clientHeight: 720 } };
+        global.window = { innerWidth: 1280, innerHeight: 720 };
+        keystoneLootSite.placeTooltip(anchor, tooltip);
+        assert.strictEqual(style.position, "fixed");
+        assert.strictEqual(style.left, "208px");
+        assert.strictEqual(style.top, "100px");
+    } finally {
+        global.document = originalDocument;
+        global.window = originalWindow;
+    }
 });
 
 test("MythicTrap 中文路径规范化", () => {
