@@ -783,14 +783,17 @@ const api = (function () {
                 }
             }
 
-            // 1. 去广告 + 取消 grid 分栏
+            // 1. 仅隐藏明确标记为广告的节点，避免通用布局类名误伤页面内容。
+            const wowheadAdSelectors = [
+                "#ad-horizontal", "#ad-vertical", "#ad-sidebar", "#ad-top", "#ad-bottom",
+                ".zaf-unit-wrapper", '.zaf-block[id^="zaf-"]',
+                '[id*="google_ads"]', '[id*="google_image"]', '[class*="ad-placement"]',
+                '[class*="advertisement"]', "ins.adsbygoogle",
+                'iframe[src*="doubleclick"]', 'iframe[src*="googlesyndication"]',
+                "div[data-ad]",
+            ];
             const wowheadAdCSS = `
-            #ad-horizontal, #ad-vertical, #ad-sidebar, #ad-top, #ad-bottom,
-            .sidebar-wrapper, .blocks, .zaf-unit-wrapper, .pb-stream,
-            [id*="google_ads"], [id*="google_image"], [class*="ad-placement"],
-            [class*="-ad-"], [class*="_ad_"], ins.adsbygoogle,
-            iframe[src*="doubleclick"], iframe[src*="googlesyndication"],
-            div[data-ad], #video-pos-fixed, .advertisement {
+            ${wowheadAdSelectors.join(",\n            ")} {
                 display: none !important;
                 visibility: hidden !important;
                 width: 0 !important;
@@ -798,35 +801,11 @@ const api = (function () {
                 opacity: 0 !important;
                 pointer-events: none !important;
             }
-            #page-content, #main, #main-contents, .page-content,
-            .layout-grid, .grid-container {
-                grid-template-columns: 1fr !important;
-                display: block !important;
-                max-width: 100% !important;
-                padding-right: 0 !important;
-                margin-right: 0 !important;
-            }
-            #page-content .sidebar-wrapper,
-            #main > .blocks,
-            #main-contents > .blocks {
-                display: none !important;
-            }
         `;
             GM_addStyle(wowheadAdCSS);
 
             const removeWowheadAds = () => {
-                const selectors = [
-                    "#ad-horizontal",
-                    "#ad-vertical",
-                    ".sidebar-wrapper",
-                    ".blocks",
-                    ".zaf-unit-wrapper",
-                    ".pb-stream",
-                    "ins.adsbygoogle",
-                    '[id*="google_ads"]',
-                    '[class*="ad-placement"]',
-                ];
-                selectors.forEach((sel) => {
+                wowheadAdSelectors.forEach((sel) => {
                     document.querySelectorAll(sel).forEach((el) => el.remove());
                 });
             };
