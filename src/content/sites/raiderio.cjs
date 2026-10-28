@@ -9,7 +9,7 @@ function removeAds() {
 }
 
 function installRaiderIo() {
-    GM_addStyle([
+    RWES_addStyle([
         ".rio-right-pane { display: none !important; }",
         "[data-rwes-rio-main-layout] { grid-template-columns: minmax(0, 1fr) !important; }",
         "[data-rwes-rio-main-layout] > :not(.rio-right-pane) { width: 100% !important; max-width: 100% !important; grid-column: 1 / -1 !important; }",

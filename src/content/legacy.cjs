@@ -1,44 +1,3 @@
-// ==UserScript==
-// @name         【RodMajors】魔兽世界常用网站中文用户体验增强 (Wowhead / WCL / Raider.io 等)
-// @namespace    https://github.com/RWES-RodMajors-WOW-Enhance-Script/RWES
-// @version      1.0.2
-// @description  Wowhead/WCL 去广告 + 自动跳转简中 + 全站 Wowhead 链接/鼠标提示强制简体中文 + 多站点支持
-// @author       RodMajors
-// @icon         https://wowdata.rodmajors.com/icon128.png
-// @icon64       https://wowdata.rodmajors.com/icon64.png
-// @match        *://*.wowhead.com/*
-// @match        *://*.warcraftlogs.com/*
-// @match        *://*.raider.io/*
-// @match        *://*.wipefest.gg/*
-// @match        *://*.bloodmallet.com/*
-// @match        *://*.wowanalyzer.com/*
-// @match        *://*.maxroll.gg/*
-// @match        *://*.mythictrap.com/*
-// @match        *://*.mythicstats.com/*
-// @match        *://*.archon.gg/*
-// @match        *://*.raidbots.com/*
-// @match        *://liquidarmory.com/*
-// @match        *://*.liquidarmory.com/*
-// @match        *://questionablyepic.com/*
-// @match        *://*.questionablyepic.com/*
-// @match        *://*.icy-veins.com/*
-// @match        *://keystoneloot.io/*
-// @match        *://*.keystoneloot.io/*
-// @match        *://murlok.io/*
-// @match        *://*.murlok.io/*
-// @match        *://lorrgs.io/*
-// @match        *://*.simulationcraft.org/*
-// @grant        GM_addStyle
-// @grant        GM_getValue
-// @grant        GM_setValue
-// @grant        GM_registerMenuCommand
-// @grant        GM_xmlhttpRequest
-// @connect      wowdata.rodmajors.com
-// @run-at       document-start
-// @license      MIT
-// @downloadURL https://update.greasyfork.org/scripts/602426/%E3%80%90RodMajors%E3%80%91%E9%AD%94%E5%85%BD%E4%B8%96%E7%95%8C%E5%B8%B8%E7%94%A8%E7%BD%91%E7%AB%99%E4%B8%AD%E6%96%87%E7%94%A8%E6%88%B7%E4%BD%93%E9%AA%8C%E5%A2%9E%E5%BC%BA%20%28Wowhead%20%20WCL%20%20Raiderio%20%E7%AD%89%29.user.js
-// @updateURL https://update.greasyfork.org/scripts/602426/%E3%80%90RodMajors%E3%80%91%E9%AD%94%E5%85%BD%E4%B8%96%E7%95%8C%E5%B8%B8%E7%94%A8%E7%BD%91%E7%AB%99%E4%B8%AD%E6%96%87%E7%94%A8%E6%88%B7%E4%BD%93%E9%AA%8C%E5%A2%9E%E5%BC%BA%20%28Wowhead%20%20WCL%20%20Raiderio%20%E7%AD%89%29.meta.js
-// ==/UserScript==
 
 const { installWowhead } = require("./sites/wowhead.cjs");
 const { installWarcraftLogs } = require("./sites/warcraftlogs.cjs");
@@ -214,13 +173,6 @@ const api = (function () {
             /^(item|spell|npc|zone|quest|achievement|currency)=(\d+)/i.exec(s);
         if (!m) return null;
         return { type: m[1].toLowerCase(), id: m[2] };
-    }
-
-    function serverBaseUrl(url) {
-        if (!url) return null;
-        const s = String(url).trim().replace(/\/+$/, "");
-        if (!/^https?:\/\//i.test(s)) return null;
-        return s;
     }
 
     function findNameZh(indexes, text, minLen) {
@@ -508,103 +460,7 @@ const api = (function () {
         return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     }
 
-    // ==================== 词典存储与同步(浏览器侧) ====================
-
-    const DB_NAME = "rwes-dict";
-    const DB_VERSION = 1;
-
-    function openDb() {
-        return new Promise(function (resolve, reject) {
-            const req = indexedDB.open(DB_NAME, DB_VERSION);
-            req.onupgradeneeded = function () {
-                const db = req.result;
-                if (!db.objectStoreNames.contains("meta"))
-                    db.createObjectStore("meta");
-                if (!db.objectStoreNames.contains("files"))
-                    db.createObjectStore("files");
-            };
-            req.onsuccess = function () {
-                resolve(req.result);
-            };
-            req.onerror = function () {
-                reject(req.error);
-            };
-        });
-    }
-
-    function idbGet(db, store, key) {
-        return new Promise(function (resolve, reject) {
-            const tx = db.transaction(store, "readonly");
-            const req = tx.objectStore(store).get(key);
-            req.onsuccess = function () {
-                resolve(req.result);
-            };
-            req.onerror = function () {
-                reject(req.error);
-            };
-        });
-    }
-
-    function idbPut(db, store, key, value) {
-        return new Promise(function (resolve, reject) {
-            const tx = db.transaction(store, "readwrite");
-            tx.objectStore(store).put(value, key);
-            tx.oncomplete = function () {
-                resolve();
-            };
-            tx.onerror = function () {
-                reject(tx.error);
-            };
-        });
-    }
-
-    function idbClearStore(db, store) {
-        return new Promise(function (resolve, reject) {
-            const tx = db.transaction(store, "readwrite");
-            tx.objectStore(store).clear();
-            tx.oncomplete = function () {
-                resolve();
-            };
-            tx.onerror = function () {
-                reject(tx.error);
-            };
-        });
-    }
-
-    function idbDelete(db, store, key) {
-        return new Promise(function (resolve, reject) {
-            const tx = db.transaction(store, "readwrite");
-            tx.objectStore(store).delete(key);
-            tx.oncomplete = function () {
-                resolve();
-            };
-            tx.onerror = function () {
-                reject(tx.error);
-            };
-        });
-    }
-
-    function gmFetch(url, responseType) {
-        return new Promise(function (resolve, reject) {
-            GM_xmlhttpRequest({
-                method: "GET",
-                url: url,
-                responseType: responseType,
-                nocache: true,
-                timeout: 60000,
-                onload: function (r) {
-                    if (r.status >= 200 && r.status < 300) resolve(r.response);
-                    else reject(new Error("HTTP " + r.status));
-                },
-                onerror: function () {
-                    reject(new Error("network error"));
-                },
-                ontimeout: function () {
-                    reject(new Error("timeout"));
-                },
-            });
-        });
-    }
+    // ==================== 扩展词典数据解码 ====================
 
     async function gunzipJson(arrayBuffer) {
         const ds = new DecompressionStream("gzip");
@@ -613,38 +469,13 @@ const api = (function () {
         return JSON.parse(new TextDecoder("utf-8").decode(buf));
     }
 
-    function rebuildIndexes(db, state) {
-        return new Promise(function (resolve, reject) {
-            const tx = db.transaction("files", "readonly");
-            const req = tx.objectStore("files").getAllKeys();
-            req.onsuccess = function () {
-                const keys = req.result || [];
-                keys.forEach(function (name) {
-                    const get = tx.objectStore("files").get(name);
-                    get.onsuccess = function () {
-                        state.indexes[name] = parseArtifact(get.result);
-                    };
-                });
-            };
-            tx.oncomplete = function () {
-                resolve();
-            };
-            tx.onerror = function () {
-                reject(tx.error);
-            };
-        });
-    }
-
     async function syncDictionary(state) {
-        if (typeof globalThis !== "undefined" && globalThis.__RWES_EXTENSION__) {
-            const settings = await chrome.storage.local.get("translateEnabled");
-            if (settings.translateEnabled === false) return null;
             const syncState = await chrome.runtime.sendMessage({ type: "sync-if-empty" });
             if (!syncState || !syncState.ok) throw new Error((syncState && syncState.error) || "dictionary check failed");
             let listing = await chrome.runtime.sendMessage({ type: "dictionary-names" });
             if (!listing || !listing.ok) throw new Error((listing && listing.error) || "dictionary unavailable");
             const requiredTables = REQUIRED_TABLES.slice();
-            const siteDictionary = siteDictionaryForHost(typeof location !== "undefined" ? location.hostname : "");
+            const siteDictionary = siteDictionaryForHost(location.hostname);
             if (siteDictionary) requiredTables.push(siteDictionary);
             if (siteDictionary === "site-maxroll.json.gz") requiredTables.push("spelldescription.json.gz");
             let names = (listing.names || []).filter(function (name) { return requiredTables.includes(name); });
@@ -669,50 +500,9 @@ const api = (function () {
             }
             if (!Object.keys(state.indexes).length) throw new Error("dictionary cache is empty");
             return listing.meta || null;
-        }
-        const base = serverBaseUrl(state.server);
-        if (!base) {
-            throw new Error(
-                "dictServer 缺少 http(s):// 协议,当前值: " + state.server,
-            );
-        }
-        const db = await openDb();
-        const remote = await gmFetch(base + "/api/v1/manifest", "json");
-        const urlBase = base + (remote.url_base || "");
-        remote.files.forEach(function (f) {
-            f.url = urlBase + "/" + f.name;
-        });
-
-        const localMeta = (await idbGet(db, "meta", "manifest")) || {
-            version: null,
-            files: {},
-        };
-        const diff = diffManifest(localMeta, remote);
-
-        if (diff.toDownload.length) {
-            for (const f of diff.toDownload) {
-                const buf = await gmFetch(f.url, "arraybuffer");
-                const obj = await gunzipJson(buf);
-                await idbPut(db, "files", f.name, obj);
-                localMeta.files[f.name] = f.sha256;
-            }
-        }
-
-        const stale = listStaleTables(localMeta.files, remote.files);
-        for (const name of stale) {
-            await idbDelete(db, "files", name);
-            delete localMeta.files[name];
-        }
-
-        localMeta.version = remote.version;
-        await idbPut(db, "meta", "manifest", localMeta);
-        await rebuildIndexes(db, state);
-        return db;
     }
 
     // ==================== 站点适配器 ====================
-
-    const DICT_SERVER_DEFAULT = "https://wowdata.rodmajors.com"; // 生产环境
 
     function attrIdRef(el) {
         const attrs = ["data-item-id", "data-itemid"];
@@ -948,50 +738,7 @@ const api = (function () {
 
     function boot() {
         // ==================== 配置 ====================
-        const CONFIG = {
-            // 是否自动把 Wowhead 页面跳转到简体中文
-            autoRedirectWowheadCN: GM_getValue("autoRedirectWowheadCN", true),
-            // 是否自动把 WCL 跳转到 cn 子域名(新增/强化)
-            autoRedirectWCLCN: GM_getValue("autoRedirectWCLCN", true),
-            // 是否自动把 MythicTrap 页面跳转到简体中文
-            autoRedirectMythicTrapCN: GM_getValue(
-                "autoRedirectMythicTrapCN",
-                true,
-            ),
-            // 是否把测试服链接也强制改成正式服简中(谨慎开启)
-            forceTestToCN: GM_getValue("forceTestToCN", false),
-        };
-
-        // 注册油猴菜单
-        if (!(typeof globalThis !== "undefined" && globalThis.__RWES_EXTENSION__)) GM_registerMenuCommand(
-            (CONFIG.autoRedirectWowheadCN ? "✅" : "❌") +
-                " Wowhead 自动跳转简中",
-            () => {
-                CONFIG.autoRedirectWowheadCN = !CONFIG.autoRedirectWowheadCN;
-                GM_setValue(
-                    "autoRedirectWowheadCN",
-                    CONFIG.autoRedirectWowheadCN,
-                );
-                location.reload();
-            },
-        );
-        if (!(typeof globalThis !== "undefined" && globalThis.__RWES_EXTENSION__)) GM_registerMenuCommand(
-            (CONFIG.autoRedirectWCLCN ? "✅" : "❌") + " WCL 自动跳转 cn",
-            () => {
-                CONFIG.autoRedirectWCLCN = !CONFIG.autoRedirectWCLCN;
-                GM_setValue("autoRedirectWCLCN", CONFIG.autoRedirectWCLCN);
-                location.reload();
-            },
-        );
-        if (!(typeof globalThis !== "undefined" && globalThis.__RWES_EXTENSION__)) GM_registerMenuCommand(
-            (CONFIG.forceTestToCN ? "✅" : "❌") +
-                " 测试服链接强制改正式服简中",
-            () => {
-                CONFIG.forceTestToCN = !CONFIG.forceTestToCN;
-                GM_setValue("forceTestToCN", CONFIG.forceTestToCN);
-                location.reload();
-            },
-        );
+        const CONFIG = { ...__RWES_SETTINGS__ };
 
         const host = location.hostname;
 
@@ -1127,48 +874,10 @@ const api = (function () {
         setTimeout(convertAllWowheadLinks, 5000);
 
         // ==================== 自动翻译(新) ====================
-        const CONFIG_TRANSLATE = {
-            translateEnabled:
-                typeof GM_getValue === "function"
-                    ? GM_getValue("translateEnabled", true)
-                    : false,
-            dictServer:
-                typeof GM_getValue === "function"
-                    ? GM_getValue("dictServer", DICT_SERVER_DEFAULT)
-                    : DICT_SERVER_DEFAULT,
-        };
+        const CONFIG_TRANSLATE = { translateEnabled: __RWES_SETTINGS__.translateEnabled };
         translationEnabled = CONFIG_TRANSLATE.translateEnabled;
 
-        if (!(typeof globalThis !== "undefined" && globalThis.__RWES_EXTENSION__)) GM_registerMenuCommand(
-            (CONFIG_TRANSLATE.translateEnabled ? "✅" : "❌") +
-                " 自动翻译英文名词",
-            function () {
-                CONFIG_TRANSLATE.translateEnabled =
-                    !CONFIG_TRANSLATE.translateEnabled;
-                GM_setValue(
-                    "translateEnabled",
-                    CONFIG_TRANSLATE.translateEnabled,
-                );
-                location.reload();
-            },
-        );
-        if (!(typeof globalThis !== "undefined" && globalThis.__RWES_EXTENSION__)) GM_registerMenuCommand("清空词典缓存", function () {
-            openDb()
-                .then(function (db) {
-                    return Promise.all([
-                        idbClearStore(db, "files"),
-                        idbClearStore(db, "meta"),
-                    ]);
-                })
-                .catch(function (e) {
-                    console.warn("[RWES] 清空词典缓存失败:", e);
-                })
-                .finally(function () {
-                    location.reload();
-                });
-        });
-
-        const dictState = { server: CONFIG_TRANSLATE.dictServer, indexes: {} };
+        const dictState = { indexes: {} };
         let maxrollHandlers = null;
         if (host.endsWith("maxroll.gg")) {
             const descriptionTranslator = function (text, spellId) {
@@ -1185,10 +894,7 @@ const api = (function () {
             });
         }
 
-        if (
-            CONFIG_TRANSLATE.translateEnabled &&
-            (typeof GM_xmlhttpRequest === "function" || (typeof globalThis !== "undefined" && globalThis.__RWES_EXTENSION__))
-        ) {
+        if (CONFIG_TRANSLATE.translateEnabled) {
             syncDictionary(dictState)
                 .then(function () {
                     scheduleScan(dictState, 0);
@@ -1236,7 +942,7 @@ const api = (function () {
         setTranslationEnabled: function (enabled) {
             translationEnabled = Boolean(enabled);
             if (!translationEnabled) clearTimeout(scanTimer);
-        else if (typeof globalThis.__RWES_EXTENSION__ === "undefined") scheduleScan({ indexes: {} }, 0);
+            else if (translationEnabled) scheduleScan({ indexes: {} }, 0);
         },
         diffManifest: diffManifest,
         listStaleTables: listStaleTables,
@@ -1254,13 +960,11 @@ const api = (function () {
         lookupZhId: lookupZhId,
         lookupZhIds: lookupZhIds,
         extractWowheadId: extractWowheadId,
-        serverBaseUrl: serverBaseUrl,
         findNameZh: findNameZh,
         TYPE_TABLE: TYPE_TABLE,
         syncDictionary: syncDictionary,
         gunzipJson: gunzipJson,
-        openDb: openDb,
     };
 })();
 module.exports = api;
-globalThis.__RWES_LEGACY_API__ = api;
+globalThis.__RWES_API__ = api;

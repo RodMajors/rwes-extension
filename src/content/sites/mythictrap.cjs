@@ -25,7 +25,7 @@ function installMythicTrap(config) {
         }
     }
 
-    GM_addStyle([
+    RWES_addStyle([
         '[class*="boss_adsLayoutWrapper__"] { display: block !important; }',
         '[class*="boss_adsLayoutRightSection__"] { display: none !important; }',
         '[class*="boss_adsLayoutLeftSection__"] { width: 100% !important; max-width: none !important; flex: 1 1 100% !important; }',

@@ -99,7 +99,7 @@ function translateTooltipLabels(root, translateText) {
 }
 
 function installMaxroll(translateDescription, translateText) {
-    GM_addStyle('[data-rwes-maxroll-adblock-prompt] { display: none !important; }');
+    RWES_addStyle('[data-rwes-maxroll-adblock-prompt] { display: none !important; }');
     dismissAdblockPrompt();
     let activeSpellId = null;
     document.addEventListener("pointerover", (event) => {

@@ -20,7 +20,7 @@ function installWarcraftLogs(config) {
         }
     }
 
-    GM_addStyle([
+    RWES_addStyle([
         "#main-box { display: block !important; }",
         "#right-ad-box, #top-banner, #bottom-banner, #google-center-div, .adsbygoogle, [id*=\"ad-\"], [class*=\"ad-box\"], [class*=\"advertisement\"] {",
         "display: none !important; visibility: hidden !important; width: 0 !important; height: 0 !important;",

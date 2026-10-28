@@ -12,7 +12,7 @@ function removeAds() {
 }
 
 function installWowAnalyzer() {
-    GM_addStyle([
+    RWES_addStyle([
         'a:has(#top-banner-atf), a:has(#vertical-banner-atf) { display: none !important; }',
     ].join("\n"));
     removeAds();

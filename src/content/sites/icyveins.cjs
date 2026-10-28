@@ -31,7 +31,7 @@ function cleanup() {
 
 
 function installIcyVeins() {
-    GM_addStyle('.in-content-ad { display: none !important; }');
+    RWES_addStyle('.in-content-ad { display: none !important; }');
     cleanup();
     const observer = new MutationObserver(cleanup);
     observer.observe(document.documentElement, { childList: true, subtree: true });

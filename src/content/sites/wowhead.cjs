@@ -38,7 +38,7 @@ function installWowhead(config) {
         }
     }
 
-    GM_addStyle([
+    RWES_addStyle([
         "div#main { display: block !important; grid-template-columns: none !important; }",
         "div#main > div:not(.main-contents) { display: none !important; }",
         "div#main > div.main-contents { display: block !important; width: 100% !important; max-width: none !important; min-width: 0 !important; grid-column: 1 / -1 !important; }",

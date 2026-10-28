@@ -78,20 +78,20 @@ test("MythicTrap 中文路径规范化", () => {
 test("WCL 特判将 main-box ID 布局改为 block", () => {
     const originalLocation = global.location;
     const originalDocument = global.document;
-    const originalAddStyle = global.GM_addStyle;
+    const originalAddStyle = global.RWES_addStyle;
     const originalSetInterval = global.setInterval;
     let injectedCss = "";
     try {
         global.location = { hostname: "cn.warcraftlogs.com", href: "https://cn.warcraftlogs.com/" };
         global.document = { readyState: "loading", addEventListener: () => {} };
-        global.GM_addStyle = (css) => { injectedCss = css; };
+        global.RWES_addStyle = (css) => { injectedCss = css; };
         global.setInterval = () => 0;
         warcraftLogsSite.installWarcraftLogs({ autoRedirectWCLCN: false });
         assert.match(injectedCss, /#main-box\s*\{\s*display:\s*block !important;/);
     } finally {
         global.location = originalLocation;
         global.document = originalDocument;
-        global.GM_addStyle = originalAddStyle;
+        global.RWES_addStyle = originalAddStyle;
         global.setInterval = originalSetInterval;
     }
 });
@@ -99,7 +99,7 @@ test("WCL 特判将 main-box ID 布局改为 block", () => {
 test("Raider.io 特判只处理右侧广告栏", () => {
     const originalDocument = global.document;
     const originalMutationObserver = global.MutationObserver;
-    const originalAddStyle = global.GM_addStyle;
+    const originalAddStyle = global.RWES_addStyle;
     let injectedCss = "";
     try {
         global.document = {
@@ -110,7 +110,7 @@ test("Raider.io 特判只处理右侧广告栏", () => {
         global.MutationObserver = class {
             observe() {}
         };
-        global.GM_addStyle = (css) => { injectedCss = css; };
+        global.RWES_addStyle = (css) => { injectedCss = css; };
         raiderIoSite.installRaiderIo();
         assert.match(injectedCss, /\.rio-right-pane/);
         assert.match(injectedCss, /data-rwes-rio-main-layout/);
@@ -119,7 +119,7 @@ test("Raider.io 特判只处理右侧广告栏", () => {
     } finally {
         global.document = originalDocument;
         global.MutationObserver = originalMutationObserver;
-        global.GM_addStyle = originalAddStyle;
+        global.RWES_addStyle = originalAddStyle;
     }
 });
 
@@ -281,7 +281,6 @@ test("findNameZh: 跨表按序查找", () => {
 test("browser modules exported for reference", () => {
     assert.strictEqual(typeof rwes.syncDictionary, "function");
     assert.strictEqual(typeof rwes.gunzipJson, "function");
-    assert.strictEqual(typeof rwes.openDb, "function");
 });
 
 test("listStaleTables: prunes removed and keeps present", () => {
@@ -295,19 +294,6 @@ test("listStaleTables: empty remote prunes all, null-safe", () => {
     assert.deepStrictEqual(rwes.listStaleTables(local, []), ["items.json.gz"]);
     assert.deepStrictEqual(rwes.listStaleTables(null, null), []);
     assert.deepStrictEqual(rwes.listStaleTables({}, null), []);
-});
-
-test("serverBaseUrl: accepts http/https, strips trailing slashes", () => {
-    assert.strictEqual(rwes.serverBaseUrl("http://127.0.0.1:8000"), "http://127.0.0.1:8000");
-    assert.strictEqual(rwes.serverBaseUrl("https://rwes-dict.example.com/"), "https://rwes-dict.example.com");
-    assert.strictEqual(rwes.serverBaseUrl("  http://a.b:8000//  "), "http://a.b:8000");
-});
-
-test("serverBaseUrl: rejects missing scheme and empty", () => {
-    assert.strictEqual(rwes.serverBaseUrl("127.0.0.1:8000"), null);
-    assert.strictEqual(rwes.serverBaseUrl("rwes-dict.example.com"), null);
-    assert.strictEqual(rwes.serverBaseUrl(""), null);
-    assert.strictEqual(rwes.serverBaseUrl(null), null);
 });
 
 test("findNameZh: specclass combined names", () => {

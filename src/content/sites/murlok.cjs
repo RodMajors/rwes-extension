@@ -13,7 +13,7 @@ function layoutCss() {
 
 
 function installMurlok() {
-    GM_addStyle([
+    RWES_addStyle([
         "body > div aside { display: none !important; }",
         layoutCss(),
     ].join("\n"));
