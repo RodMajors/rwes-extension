@@ -23,6 +23,7 @@ const raidbotsSite = require("../src/content/sites/raidbots.cjs");
 const liquidArmorySite = require("../src/content/sites/liquidarmory.cjs");
 const icyVeinsSite = require("../src/content/sites/icyveins.cjs");
 const keystoneLootSite = require("../src/content/sites/keystoneloot.cjs");
+const murlokSite = require("../src/content/sites/murlok.cjs");
 
 test("站点特判模块导出安装入口", () => {
     assert.strictEqual(typeof wowheadSite.installWowhead, "function");
@@ -34,6 +35,7 @@ test("站点特判模块导出安装入口", () => {
     assert.strictEqual(typeof raidbotsSite.installRaidbots, "function");
     assert.strictEqual(typeof icyVeinsSite.installIcyVeins, "function");
     assert.strictEqual(typeof keystoneLootSite.installKeystoneLoot, "function");
+    assert.strictEqual(typeof murlokSite.installMurlok, "function");
     assert.strictEqual(liquidArmorySite.isLiquidArmoryHost("liquidarmory.com"), true);
     assert.strictEqual(liquidArmorySite.isLiquidArmoryHost("www.liquidarmory.com"), true);
     assert.strictEqual(liquidArmorySite.isLiquidArmoryHost("example.com"), false);

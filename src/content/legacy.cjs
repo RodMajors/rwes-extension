@@ -50,6 +50,7 @@ const { installRaidbots } = require("./sites/raidbots.cjs");
 const { isLiquidArmoryHost, installLiquidArmory } = require("./sites/liquidarmory.cjs");
 const { installIcyVeins } = require("./sites/icyveins.cjs");
 const { installKeystoneLoot } = require("./sites/keystoneloot.cjs");
+const { installMurlok } = require("./sites/murlok.cjs");
 
 const api = (function () {
     "use strict";
@@ -774,6 +775,7 @@ const api = (function () {
         }
         if (host.includes("icy-veins.com")) installIcyVeins();
         if (host.includes("keystoneloot.io")) installKeystoneLoot();
+        if (host.includes("murlok.io")) installMurlok();
 
         // ==================== 6. 全站 Wowhead 链接 + 鼠标提示强制简中 ====================
         // 设置全局 tooltip 域名为简中
