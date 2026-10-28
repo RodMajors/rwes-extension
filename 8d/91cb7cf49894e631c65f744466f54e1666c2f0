@@ -1,0 +1,20 @@
+src/content/legacy.cjs
+  h_745ff005454789 115,1001
+src/content/sites/raiderio.cjs
+  h_745ff005454789 5,16-17
+src/shared/constants.js
+  h_745ff005454789 17-18
+tests/translate.test.cjs
+  h_745ff005454789 126-131
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8d91cb7cf49894e631c65f744466f54e1666c2f0",
+  "prompts": {},
+  "humans": {
+    "h_745ff005454789": {
+      "author": "RodMajors <pro-vana@outlook.com>"
+    }
+  }
+}
