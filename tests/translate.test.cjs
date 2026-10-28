@@ -132,6 +132,31 @@ test("WowAnalyzer 特判删除广告槽位所属链接", () => {
     }
 });
 
+test("Icy-Veins 特判关闭广告拦截提示", () => {
+    const originalDocument = global.document;
+    let clicked = false;
+    let marked = false;
+    const continueItem = { textContent: "Continue without supporting us", click: () => { clicked = true; } };
+    const overlay = {
+        hasAttribute: () => marked,
+        setAttribute: () => { marked = true; },
+        querySelectorAll: () => [continueItem],
+        remove: () => {},
+    };
+    const heading = {
+        textContent: "Looks like your ad blocker is on.",
+        closest: () => overlay,
+    };
+    try {
+        global.document = { querySelectorAll: (selector) => selector === "h2" ? [heading] : [] };
+        assert.strictEqual(icyVeinsSite.dismissAdblockPrompt(), true);
+        assert.strictEqual(clicked, true);
+        assert.strictEqual(marked, true);
+    } finally {
+        global.document = originalDocument;
+    }
+});
+
 test("Maxroll 特判点击广告拦截提示的 No Thanks", () => {
     const originalDocument = global.document;
     let clicked = false;
