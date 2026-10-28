@@ -1,0 +1,20 @@
+docs/TODO.md
+  h_745ff005454789 5-9,12
+src/content/legacy.cjs
+  h_745ff005454789 313-366,505,1028-1034,1091
+src/content/sites/maxroll.cjs
+  h_745ff005454789 27-70,73-80,83
+tests/translate.test.cjs
+  h_745ff005454789 337-355
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4319521d81bc99c968ca09e448b81adecb8c93b4",
+  "prompts": {},
+  "humans": {
+    "h_745ff005454789": {
+      "author": "RodMajors <pro-vana@outlook.com>"
+    }
+  }
+}
