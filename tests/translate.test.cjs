@@ -338,6 +338,22 @@ test("站点专属词典可按 hostname 精确选择并覆盖全局词条", () =
     }
 });
 
+test("站点词典优先于全局词典和游戏名称词典", () => {
+    const previousLocation = global.location;
+    global.location = { hostname: "www.maxroll.gg" };
+    try {
+        const indexes = fakeIndexes({
+            "site-maxroll.json.gz": { "talents": "天赋构筑" },
+            "custom.json.gz": { "talents": "天赋" },
+            "chrspecialization.json.gz": { "talents": "专精天赋" },
+        });
+        assert.strictEqual(rwes.translateText("Talents", indexes), "天赋构筑");
+    } finally {
+        if (previousLocation === undefined) delete global.location;
+        else global.location = previousLocation;
+    }
+});
+
 test("spellDescriptionTemplate: 将已计算英文数值安全套入中文模板", () => {
     const indexes = fakeIndexes({
         "spelldescription.json.gz": {},

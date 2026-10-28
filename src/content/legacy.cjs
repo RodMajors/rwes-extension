@@ -183,6 +183,16 @@ const api = (function () {
         return null;
     }
 
+    function lookupIdWithSiteOverride(index, id, indexes) {
+        const siteDictionary = siteDictionaryForHost(location.hostname);
+        return lookupId(siteDictionary ? indexes[siteDictionary] : null, id) || lookupId(index, id);
+    }
+
+    function lookupEnWithSiteOverride(index, name, minLen, indexes) {
+        const siteDictionary = siteDictionaryForHost(location.hostname);
+        return lookupEn(siteDictionary ? indexes[siteDictionary] : null, name, minLen) || lookupEn(index, name, minLen);
+    }
+
     const NAME_BLOCKLIST = new Set([
         "archon",
         "bloodmallet",
@@ -550,7 +560,7 @@ const api = (function () {
         const table = TYPE_TABLE[ref.type];
         const idx = table && state.indexes[table + ".json.gz"];
         if (!idx) return false;
-        const zh = lookupId(idx, ref.id);
+        const zh = lookupIdWithSiteOverride(idx, ref.id, state.indexes);
         if (!zh) return false;
 
         let changed = false;
@@ -560,7 +570,7 @@ const api = (function () {
             const raw = node.nodeValue;
             if (!raw || !raw.trim()) continue;
             const t = raw.trim();
-            if (lookupEn(idx, t, 1) === zh) {
+            if (lookupEnWithSiteOverride(idx, t, 1, state.indexes) === zh) {
                 node.nodeValue = raw.replace(t, zh);
                 changed = true;
             }
@@ -569,7 +579,7 @@ const api = (function () {
         if (!changed) {
             const leaf = firstNonCJKLeaf(el);
             const leafText = leaf && (leaf.textContent || "").trim();
-            if (leafText && lookupEn(idx, leafText, 1) === zh) {
+            if (leafText && lookupEnWithSiteOverride(idx, leafText, 1, state.indexes) === zh) {
                 leaf.textContent = zh;
                 changed = true;
             }
@@ -582,7 +592,7 @@ const api = (function () {
                     if (sib === el || sib.tagName === "A") continue;
                     const leaf = firstNonCJKLeaf(sib);
                     const leafText = leaf && (leaf.textContent || "").trim();
-                    if (!leafText || lookupEn(idx, leafText, 1) !== zh)
+                    if (!leafText || lookupEnWithSiteOverride(idx, leafText, 1, state.indexes) !== zh)
                         continue;
                     leaf.textContent = zh;
                     changed = true;
@@ -604,7 +614,7 @@ const api = (function () {
         const table = TYPE_TABLE[ref.type];
         const idx = table && state.indexes[table + ".json.gz"];
         if (!idx) return false;
-        const zh = lookupId(idx, ref.id);
+        const zh = lookupIdWithSiteOverride(idx, ref.id, state.indexes);
         if (!zh) return false;
         const t = (el.textContent || "").trim();
         if (!t) {
@@ -615,7 +625,7 @@ const api = (function () {
             markEl(el);
             return false;
         }
-        if (lookupEn(idx, t, 1) !== zh) return false;
+        if (lookupEnWithSiteOverride(idx, t, 1, state.indexes) !== zh) return false;
         el.textContent = zh;
         markEl(el);
         return true;
@@ -956,6 +966,8 @@ const api = (function () {
         PREFIX_RULES: PREFIX_RULES,
         parseArtifact: parseArtifact,
         lookupId: lookupId,
+        lookupIdWithSiteOverride: lookupIdWithSiteOverride,
+        lookupEnWithSiteOverride: lookupEnWithSiteOverride,
         lookupEn: lookupEn,
         lookupZhId: lookupZhId,
         lookupZhIds: lookupZhIds,
