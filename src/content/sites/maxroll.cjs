@@ -45,6 +45,8 @@ function translateSpellTooltip(root, translateDescription, activeSpellId) {
     if (translateDescription.renderTooltip) {
         const description = tooltip.querySelector(".mx-color-gold");
         if (description) {
+            const currentId = spellIds[0];
+            if (description.getAttribute("data-rwes-rendered-spell") === currentId) return false;
             const rendered = translateDescription.renderTooltip(description.textContent || "", spellIds[0]);
             if (rendered) {
                 description.replaceChildren();
@@ -53,6 +55,7 @@ function translateSpellTooltip(root, translateDescription, activeSpellId) {
                     if (index) description.append(document.createElement("br"));
                     description.append(document.createTextNode(line));
                 });
+                description.setAttribute("data-rwes-rendered-spell", currentId);
                 return true;
             }
         }
@@ -103,13 +106,28 @@ function installMaxroll(translateDescription, translateText) {
         const spell = event.target && event.target.closest && event.target.closest(".wow-spell[data-wow-id], .wow-trait[data-wow-id]");
         if (spell) activeSpellId = spell.getAttribute("data-wow-id");
     }, true);
-    const scan = () => {
-        dismissAdblockPrompt();
-        if (translateText) translateTooltipLabels(document, translateText);
-        if (translateDescription) translateSpellTooltip(document, translateDescription, activeSpellId);
+    let observer = null;
+    let scanning = false;
+    let scanTimer = null;
+    const scanNow = () => {
+        if (scanning) return;
+        scanning = true;
+        if (observer) observer.disconnect();
+        try {
+            dismissAdblockPrompt();
+            if (translateText) translateTooltipLabels(document, translateText);
+            if (translateDescription) translateSpellTooltip(document, translateDescription, activeSpellId);
+        } finally {
+            scanning = false;
+            if (observer) observer.observe(document.documentElement, { childList: true, subtree: true });
+        }
     };
-    const observer = new MutationObserver(scan);
-    observer.observe(document.documentElement, { childList: true, characterData: true, subtree: true });
+    const scan = () => {
+        if (scanTimer) return;
+        scanTimer = setTimeout(() => { scanTimer = null; scanNow(); }, 50);
+    };
+    observer = new MutationObserver(scan);
+    observer.observe(document.documentElement, { childList: true, subtree: true });
     scan();
     return { scan };
 }
