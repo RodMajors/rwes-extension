@@ -33,7 +33,6 @@ for (const platform of platforms) {
   await cp(path.join(root, "_locales"), path.join(outdir, "_locales"), { recursive: true });
   await Promise.all([
     build({ entryPoints: [path.join(root, "src/content/main.js")], bundle: true, format: "iife", outfile: path.join(outdir, "content.js"), platform: "browser", target: firefox ? ["firefox128"] : ["chrome111"], define: { "process.env.NODE_ENV": '"production"' } }),
-    build({ entryPoints: [path.join(root, "src/content/page-hooks-main.js")], bundle: true, format: "iife", outfile: path.join(outdir, "page-hooks-main.js"), platform: "browser", target: firefox ? ["firefox128"] : ["chrome111"] }),
     build({ entryPoints: [path.join(root, "src/background/entry.js")], bundle: true, format: "iife", outfile: path.join(outdir, "background.js"), platform: "browser", target: firefox ? ["firefox128"] : ["chrome111"], define: { "process.env.NODE_ENV": '"production"' } }),
     build({ entryPoints: [path.join(root, "src/popup/popup.js")], bundle: true, format: "iife", outfile: path.join(outdir, "popup.js"), platform: "browser", target: firefox ? ["firefox128"] : ["chrome111"], define: { "process.env.NODE_ENV": '"production"' } }),
   ]);

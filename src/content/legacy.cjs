@@ -783,8 +783,13 @@ const api = (function () {
                 }
             }
 
-            // Wowhead 广告槽位与站点自身的反机器人/页面初始化逻辑可能相关。
-            // 在确认不会干扰 WAF、iframe 和页面初始化前，不对 Wowhead DOM 做删除。
+            // 隐藏 Wowhead 明确标记的广告槽位，但保留节点及站点脚本绑定。
+            GM_addStyle(`
+                .zaf-block[id^="zaf-"],
+                #ad-horizontal, #ad-vertical, #ad-sidebar, #ad-top, #ad-bottom {
+                    display: none !important;
+                }
+            `);
         }
 
         // ==================== 2 & 4. WCL (Warcraft Logs) ====================
