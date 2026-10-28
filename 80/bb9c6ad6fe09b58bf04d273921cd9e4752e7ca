@@ -1,0 +1,16 @@
+src/content/sites/murlok.cjs
+  h_1dc22111645538 9
+tests/translate.test.cjs
+  h_1dc22111645538 41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "80bb9c6ad6fe09b58bf04d273921cd9e4752e7ca",
+  "prompts": {},
+  "humans": {
+    "h_1dc22111645538": {
+      "author": "rodmajors <liangzerui@eccom.com.cn>"
+    }
+  }
+}
