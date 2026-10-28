@@ -1,0 +1,14 @@
+src/content/legacy.cjs
+  h_1dc22111645538 786-787,789,803-814
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "84d9a4fb8da1b04e6e9a33c9bfc070c2c4a8f9e9",
+  "prompts": {},
+  "humans": {
+    "h_1dc22111645538": {
+      "author": "rodmajors <liangzerui@eccom.com.cn>"
+    }
+  }
+}
