@@ -38,6 +38,7 @@ test("站点特判模块导出安装入口", () => {
     assert.strictEqual(typeof murlokSite.installMurlok, "function");
     assert.match(murlokSite.layoutCss(), /body > div\.vi-layout/);
     assert.match(murlokSite.layoutCss(), /vi-layout-content/);
+    assert.match(murlokSite.layoutCss(), /padding-right: clamp\(12px, 1.5vw, 24px\)/);
     assert.doesNotMatch(murlokSite.layoutCss(), /^\.vi-layout, \[class\*=\"vi-layout\"\] \{/m);
     assert.strictEqual(liquidArmorySite.isLiquidArmoryHost("liquidarmory.com"), true);
     assert.strictEqual(liquidArmorySite.isLiquidArmoryHost("www.liquidarmory.com"), true);
