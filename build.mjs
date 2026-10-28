@@ -26,7 +26,6 @@ for (const platform of platforms) {
     background,
     content_scripts: [
       { matches: SUPPORTED_MATCHES, js: ["content.js"], run_at: "document_start" },
-      { matches: SUPPORTED_MATCHES, js: ["page-hooks-main.js"], run_at: "document_start", world: "MAIN" },
     ],
     ...(firefox ? { browser_specific_settings: { gecko: { id: "rwes@rodmajors.com", strict_min_version: "142.0", data_collection_permissions: { required: ["none"] } } } } : {}),
   };

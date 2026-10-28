@@ -783,35 +783,8 @@ const api = (function () {
                 }
             }
 
-            // Wowhead 当前将广告槽位标记为 .zaf-block#zaf-*。仅移除这些广告
-            // 槽位及明确命名的旧广告位，保留其 .blocks / sidebar 等布局父节点。
-            const wowheadAdSelectors = [
-                '.zaf-block[id^="zaf-"]',
-                "#ad-horizontal", "#ad-vertical", "#ad-sidebar", "#ad-top", "#ad-bottom",
-            ];
-
-            const removeWowheadAds = () => {
-                wowheadAdSelectors.forEach((sel) => {
-                    document.querySelectorAll(sel).forEach((el) => el.remove());
-                });
-            };
-            if (document.readyState === "loading") {
-                document.addEventListener("DOMContentLoaded", removeWowheadAds);
-            } else {
-                removeWowheadAds();
-            }
-            // 仅在页面主内容区监听迟到的广告槽位，避免全页面观察与反复扫描。
-            const adObserver = new MutationObserver(removeWowheadAds);
-            const observeAds = () => {
-                const root = document.querySelector("#main") || document.body;
-                if (!root) return;
-                adObserver.observe(root, { childList: true, subtree: true });
-            };
-            if (document.readyState === "loading") {
-                document.addEventListener("DOMContentLoaded", observeAds, { once: true });
-            } else {
-                observeAds();
-            }
+            // Wowhead 广告槽位与站点自身的反机器人/页面初始化逻辑可能相关。
+            // 在确认不会干扰 WAF、iframe 和页面初始化前，不对 Wowhead DOM 做删除。
         }
 
         // ==================== 2 & 4. WCL (Warcraft Logs) ====================
@@ -896,11 +869,6 @@ const api = (function () {
         window.whTooltips = window.whTooltips || {};
         window.whTooltips.domain = "cn";
         window.whTooltips.locale = "cn";
-        if (window.Locale) {
-            try {
-                window.Locale = { getId: () => 4, getName: () => "zhcn" };
-            } catch (e) {}
-        }
 
         /**
          * 把任意 Wowhead URL 转成简体中文版本
