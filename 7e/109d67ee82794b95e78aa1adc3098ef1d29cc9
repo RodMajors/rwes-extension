@@ -1,0 +1,16 @@
+src/content/legacy.cjs
+  h_745ff005454789 186-195,563,573,582,595,617,628,969-970
+tests/translate.test.cjs
+  h_745ff005454789 341-356
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7e109d67ee82794b95e78aa1adc3098ef1d29cc9",
+  "prompts": {},
+  "humans": {
+    "h_745ff005454789": {
+      "author": "RodMajors <pro-vana@outlook.com>"
+    }
+  }
+}
