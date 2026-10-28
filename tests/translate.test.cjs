@@ -16,11 +16,15 @@ const rwes = require("../src/content/legacy.cjs");
 const wowheadSite = require("../src/content/sites/wowhead.cjs");
 const warcraftLogsSite = require("../src/content/sites/warcraftlogs.cjs");
 const raiderIoSite = require("../src/content/sites/raiderio.cjs");
+const wowAnalyzerSite = require("../src/content/sites/wowanalyzer.cjs");
+const maxrollSite = require("../src/content/sites/maxroll.cjs");
 
 test("站点特判模块导出安装入口", () => {
     assert.strictEqual(typeof wowheadSite.installWowhead, "function");
     assert.strictEqual(typeof warcraftLogsSite.installWarcraftLogs, "function");
     assert.strictEqual(typeof raiderIoSite.installRaiderIo, "function");
+    assert.strictEqual(typeof wowAnalyzerSite.installWowAnalyzer, "function");
+    assert.strictEqual(typeof maxrollSite.installMaxroll, "function");
 });
 
 test("WCL 特判将 main-box ID 布局改为 block", () => {
@@ -68,6 +72,41 @@ test("Raider.io 特判只处理右侧广告栏", () => {
         global.document = originalDocument;
         global.MutationObserver = originalMutationObserver;
         global.GM_addStyle = originalAddStyle;
+    }
+});
+
+test("WowAnalyzer 特判删除广告槽位所属链接", () => {
+    const originalDocument = global.document;
+    let removed = 0;
+    const makeSlot = () => ({ closest: () => ({ remove: () => { removed += 1; } }) });
+    try {
+        global.document = { querySelectorAll: () => [makeSlot()] };
+        wowAnalyzerSite.removeAds();
+        assert.strictEqual(removed, 2);
+    } finally {
+        global.document = originalDocument;
+    }
+});
+
+test("Maxroll 特判点击广告拦截提示的 No Thanks", () => {
+    const originalDocument = global.document;
+    let clicked = false;
+    let marked = false;
+    const dismissButton = { textContent: "No Thanks", click: () => { clicked = true; } };
+    const overlay = {
+        hasAttribute: () => marked,
+        setAttribute: () => { marked = true; },
+        querySelectorAll: () => [dismissButton],
+        remove: () => {},
+    };
+    const heading = { textContent: "Attention Ad-Block User", closest: () => overlay };
+    try {
+        global.document = { querySelectorAll: () => [heading] };
+        assert.strictEqual(maxrollSite.dismissAdblockPrompt(), true);
+        assert.strictEqual(clicked, true);
+        assert.strictEqual(marked, true);
+    } finally {
+        global.document = originalDocument;
     }
 });
 
