@@ -783,26 +783,12 @@ const api = (function () {
                 }
             }
 
-            // 1. 仅隐藏明确标记为广告的节点，避免通用布局类名误伤页面内容。
+            // Wowhead 当前将广告槽位标记为 .zaf-block#zaf-*。仅移除这些广告
+            // 槽位及明确命名的旧广告位，保留其 .blocks / sidebar 等布局父节点。
             const wowheadAdSelectors = [
+                '.zaf-block[id^="zaf-"]',
                 "#ad-horizontal", "#ad-vertical", "#ad-sidebar", "#ad-top", "#ad-bottom",
-                ".zaf-unit-wrapper", '.zaf-block[id^="zaf-"]',
-                '[id*="google_ads"]', '[id*="google_image"]', '[class*="ad-placement"]',
-                '[class*="advertisement"]', "ins.adsbygoogle",
-                'iframe[src*="doubleclick"]', 'iframe[src*="googlesyndication"]',
-                "div[data-ad]",
             ];
-            const wowheadAdCSS = `
-            ${wowheadAdSelectors.join(",\n            ")} {
-                display: none !important;
-                visibility: hidden !important;
-                width: 0 !important;
-                height: 0 !important;
-                opacity: 0 !important;
-                pointer-events: none !important;
-            }
-        `;
-            GM_addStyle(wowheadAdCSS);
 
             const removeWowheadAds = () => {
                 wowheadAdSelectors.forEach((sel) => {
@@ -814,11 +800,18 @@ const api = (function () {
             } else {
                 removeWowheadAds();
             }
-            const obs = new MutationObserver(removeWowheadAds);
-            obs.observe(document.documentElement, {
-                childList: true,
-                subtree: true,
-            });
+            // 仅在页面主内容区监听迟到的广告槽位，避免全页面观察与反复扫描。
+            const adObserver = new MutationObserver(removeWowheadAds);
+            const observeAds = () => {
+                const root = document.querySelector("#main") || document.body;
+                if (!root) return;
+                adObserver.observe(root, { childList: true, subtree: true });
+            };
+            if (document.readyState === "loading") {
+                document.addEventListener("DOMContentLoaded", observeAds, { once: true });
+            } else {
+                observeAds();
+            }
         }
 
         // ==================== 2 & 4. WCL (Warcraft Logs) ====================
