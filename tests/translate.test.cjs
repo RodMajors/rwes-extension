@@ -223,6 +223,7 @@ test("parseArtifact + lookupId", () => {
 test("parseArtifact + lookupZhId: 中文标题可反查法术 ID", () => {
     const index = rwes.parseArtifact({ id: { "1213649": "虚空射线" }, en: { "void ray": "虚空射线" } });
     assert.strictEqual(rwes.lookupZhId(index, "虚空射线"), "1213649");
+    assert.deepStrictEqual(rwes.lookupZhIds(index, "虚空射线"), ["1213649"]);
     assert.strictEqual(rwes.lookupZhId(index, "未知技能"), null);
 });
 
@@ -403,6 +404,20 @@ test("spellDescriptionTemplate: 支持公式和条件占位符", () => {
     assert.strictEqual(
         rwes.spellDescriptionTemplate("Generates 16 Fury.", "1217610", indexes),
         "产生16点恶魔之怒。",
+    );
+});
+
+test("spellDescriptionTemplate: 坍缩之星公式分支和多段文本", () => {
+    const indexes = fakeIndexes({ "spelldescription.json.gz": {}, "spellname.json.gz": {} });
+    indexes["spelldescription.json.gz"].byId.set("1221150", {
+        Description: {
+            en: "Channel a blast, $?a1242486[critically striking for ${$1221162s1*2}][dealing $1221162s1] Cosmic damage to your target and $?a1242486[${2*($1221162s1*($s2/100))}][${$1221162s1*($s2/100)}] Cosmic damage to nearby enemies. Damage reduced beyond $s1 targets.",
+            zh: "引导能量，$?a1242486[造成${$1221162s1*2}点暴击伤害][造成$1221162s1点宇宙伤害]。对附近敌人造成$?a1242486[${2*($1221162s1*($s2/100))}][${$1221162s1*($s2/100)}]点宇宙伤害。超过$s1个目标后伤害降低。",
+        },
+    });
+    assert.strictEqual(
+        rwes.spellDescriptionTemplate("Channel a blast, dealing 1275.5% Cosmic damage to your target and 637.75% Cosmic damage to nearby enemies. Damage reduced beyond 8 targets.", "1221150", indexes),
+        "引导能量，造成1275.5%点宇宙伤害。对附近敌人造成637.75%点宇宙伤害。超过8个目标后伤害降低。",
     );
 });
 

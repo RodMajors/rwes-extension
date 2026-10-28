@@ -167,7 +167,11 @@ const api = (function () {
         const byEn = new Map(Object.entries((obj && obj.en) || {}));
         const byZh = new Map();
         for (const [id, zh] of byId) {
-            if (typeof zh === "string" && zh.trim() && !byZh.has(zh.trim())) byZh.set(zh.trim(), id);
+            if (typeof zh === "string" && zh.trim()) {
+                const ids = byZh.get(zh.trim()) || [];
+                ids.push(id);
+                byZh.set(zh.trim(), ids);
+            }
         }
         return {
             byId: byId,
@@ -190,7 +194,13 @@ const api = (function () {
 
     function lookupZhId(index, name) {
         if (!index || !index.byZh || !name) return null;
-        return index.byZh.get(String(name).trim()) || null;
+        const ids = index.byZh.get(String(name).trim());
+        return ids && ids[0] || null;
+    }
+
+    function lookupZhIds(index, name) {
+        if (!index || !index.byZh || !name) return [];
+        return (index.byZh.get(String(name).trim()) || []).slice();
     }
 
     function extractWowheadId(url) {
@@ -367,7 +377,55 @@ const api = (function () {
         if (!english || !chinese) return null;
         english = english.replace(/\|[cC][0-9a-fA-F]{8}|\|[rR]/g, "").trim();
         chinese = chinese.replace(/\|[cC][0-9a-fA-F]{8}|\|[rR]/g, "").trim();
-        const tokenRegex = /\$\{[^{}]*\}(?:\.\d+)?|\$\?[^[]+(?:\[[^\]]*\]){2}|\$@[a-z]+\d+|\$\d+[a-zA-Z]\d*|\$[a-zA-Z]\d*/gi;
+        const englishVariants = expandDescriptionVariants(english);
+        const chineseVariants = new Map(expandDescriptionVariants(chinese).map(function (entry) { return [entry.path, entry.text]; }));
+        for (const variant of englishVariants) {
+            const translated = matchDescriptionVariant(text, variant.text, chineseVariants.get(variant.path), indexes);
+            if (translated) return translated;
+        }
+        return null;
+    }
+
+    function expandDescriptionVariants(source) {
+        const found = findConditionalPlaceholder(source);
+        if (!found) return [{ text: source, path: "" }];
+        const before = source.slice(0, found.start);
+        const after = source.slice(found.end);
+        const trueVariants = expandDescriptionVariants(found.branches[0]);
+        const falseVariants = expandDescriptionVariants(found.branches[1]);
+        const out = [];
+        for (const variant of trueVariants) out.push(...expandDescriptionVariants(before + variant.text + after).map(function (entry) { return { text: entry.text, path: "1" + variant.path + entry.path }; }));
+        for (const variant of falseVariants) out.push(...expandDescriptionVariants(before + variant.text + after).map(function (entry) { return { text: entry.text, path: "0" + variant.path + entry.path }; }));
+        return out;
+    }
+
+    function findConditionalPlaceholder(source) {
+        const start = source.search(/\$\?[^[]+\[/);
+        if (start < 0) return null;
+        const firstOpen = source.indexOf("[", start);
+        const first = readBalancedBracket(source, firstOpen);
+        if (!first) return null;
+        const second = readBalancedBracket(source, first.end);
+        if (!second) return null;
+        return { start: start, end: second.end, branches: [first.value, second.value] };
+    }
+
+    function readBalancedBracket(source, openIndex) {
+        if (source[openIndex] !== "[") return null;
+        let depth = 0;
+        for (let i = openIndex; i < source.length; i += 1) {
+            if (source[i] === "[") depth += 1;
+            else if (source[i] === "]") {
+                depth -= 1;
+                if (depth === 0) return { value: source.slice(openIndex + 1, i), end: i + 1 };
+            }
+        }
+        return null;
+    }
+
+    function matchDescriptionVariant(text, english, chinese, indexes) {
+        if (!english || !chinese) return null;
+        const tokenRegex = /\$\{[^{}]*\}(?:\.\d+)?|\$@[a-z]+\d+|\$\d+[a-zA-Z]\d*|\$[a-zA-Z]\d*/gi;
         const tokens = [];
         let tokenMatch;
         tokenRegex.lastIndex = 0;
@@ -382,7 +440,7 @@ const api = (function () {
         let match;
         tokenRegex.lastIndex = 0;
         while ((match = tokenRegex.exec(english))) {
-            pattern += escapeRegExp(english.slice(cursor, match.index)) + (match[0].startsWith("$?") ? "(?:.*?)?" : "(.+?)");
+            pattern += escapeRegExp(english.slice(cursor, match.index)) + "(.+?)";
             if (!match[0].startsWith("$?")) captures.push(match[0]);
             cursor = match.index + match[0].length;
         }
@@ -398,7 +456,6 @@ const api = (function () {
             replacements.set(key, queue);
         });
         return chinese.replace(tokenRegex, function (token) {
-            if (token.startsWith("$?")) return "";
             const queue = replacements.get(token.toLowerCase());
             const value = queue && queue.length ? queue.shift() : (values[++replacementIndex] || "");
             const nameMatch = /^\$@spellname(\d+)$/i.exec(token);
@@ -1079,7 +1136,7 @@ const api = (function () {
                 return spellDescriptionTemplate(text, spellId, dictState.indexes);
             };
             descriptionTranslator.resolveTitle = function (title) {
-                return lookupZhId(dictState.indexes["spellname.json.gz"], title);
+                return lookupZhIds(dictState.indexes["spellname.json.gz"], title);
             };
             maxrollHandlers = installMaxroll(descriptionTranslator, function (text) {
                 return translateText(text, dictState.indexes);
@@ -1152,6 +1209,7 @@ const api = (function () {
         lookupId: lookupId,
         lookupEn: lookupEn,
         lookupZhId: lookupZhId,
+        lookupZhIds: lookupZhIds,
         extractWowheadId: extractWowheadId,
         serverBaseUrl: serverBaseUrl,
         findNameZh: findNameZh,
