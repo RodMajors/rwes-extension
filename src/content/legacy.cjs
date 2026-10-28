@@ -783,13 +783,57 @@ const api = (function () {
                 }
             }
 
-            // 隐藏 Wowhead 明确标记的广告槽位，但保留节点及站点脚本绑定。
+            // Wowhead 特判：#main 的直属 div 中只保留主内容，去掉广告、侧栏和控制区。
             GM_addStyle(`
-                .zaf-block[id^="zaf-"],
-                #ad-horizontal, #ad-vertical, #ad-sidebar, #ad-top, #ad-bottom {
+                div#main {
+                    display: block !important;
+                    grid-template-columns: none !important;
+                }
+                div#main > div:not(.main-contents) {
                     display: none !important;
                 }
+                div#main > div.main-contents {
+                    display: block !important;
+                    width: 100% !important;
+                    max-width: none !important;
+                    min-width: 0 !important;
+                    grid-column: 1 / -1 !important;
+                }
             `);
+
+            const pruneWowheadMain = (main) => {
+                Array.from(main.children).forEach((child) => {
+                    if (
+                        child.tagName === "DIV" &&
+                        !child.classList.contains("main-contents")
+                    ) {
+                        child.remove();
+                    }
+                });
+            };
+
+            const installWowheadMainCleanup = () => {
+                const main = document.querySelector("div#main");
+                if (!main) return false;
+                pruneWowheadMain(main);
+                const mainObserver = new MutationObserver(() => {
+                    pruneWowheadMain(main);
+                });
+                mainObserver.observe(main, { childList: true });
+                return true;
+            };
+
+            if (!installWowheadMainCleanup()) {
+                const mainLookupObserver = new MutationObserver(() => {
+                    if (installWowheadMainCleanup()) {
+                        mainLookupObserver.disconnect();
+                    }
+                });
+                mainLookupObserver.observe(document.documentElement, {
+                    childList: true,
+                    subtree: true,
+                });
+            }
         }
 
         // ==================== 2 & 4. WCL (Warcraft Logs) ====================
