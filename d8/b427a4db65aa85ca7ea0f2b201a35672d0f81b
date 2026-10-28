@@ -1,0 +1,18 @@
+src/content/legacy.cjs
+  h_745ff005454789 166-171,173-175,191-195,1079,1081-1085,1155
+src/content/sites/maxroll.cjs
+  h_745ff005454789 29,35-42,50-51,86
+tests/translate.test.cjs
+  h_745ff005454789 223-228
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d8b427a4db65aa85ca7ea0f2b201a35672d0f81b",
+  "prompts": {},
+  "humans": {
+    "h_745ff005454789": {
+      "author": "RodMajors <pro-vana@outlook.com>"
+    }
+  }
+}
