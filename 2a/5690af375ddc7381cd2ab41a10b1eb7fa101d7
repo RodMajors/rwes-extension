@@ -1,0 +1,16 @@
+src/content/sites/icyveins.cjs
+  h_1dc22111645538 7-32,35-36,40
+tests/translate.test.cjs
+  h_1dc22111645538 132-156
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2a5690af375ddc7381cd2ab41a10b1eb7fa101d7",
+  "prompts": {},
+  "humans": {
+    "h_1dc22111645538": {
+      "author": "rodmajors <liangzerui@eccom.com.cn>"
+    }
+  }
+}
