@@ -1,0 +1,20 @@
+src/content/legacy.cjs
+  h_1dc22111645538 9,13,728-734,738-740,758,864,935
+src/shared/constants.js
+  h_1dc22111645538 1-2,15
+src/shared/sites.cjs
+  h_1dc22111645538 1-59
+tests/translate.test.cjs
+  h_1dc22111645538 39-43,132-145
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7b8da5fb9834f36b51c8ee36e34cf41154cb8262",
+  "prompts": {},
+  "humans": {
+    "h_1dc22111645538": {
+      "author": "rodmajors <liangzerui@eccom.com.cn>"
+    }
+  }
+}
