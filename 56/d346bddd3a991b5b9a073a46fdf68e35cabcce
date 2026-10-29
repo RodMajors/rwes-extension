@@ -1,0 +1,16 @@
+src/content/legacy.cjs
+  h_1dc22111645538 731,751,776,796-802,838-843
+tests/translate.test.cjs
+  h_1dc22111645538 358-363,403-408,413,423-479
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "56d346bddd3a991b5b9a073a46fdf68e35cabcce",
+  "prompts": {},
+  "humans": {
+    "h_1dc22111645538": {
+      "author": "rodmajors <liangzerui@eccom.com.cn>"
+    }
+  }
+}
