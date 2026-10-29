@@ -647,6 +647,43 @@ test("站点词典优先于全局词典和游戏名称词典", () => {
     }
 });
 
+test("Archon 长段落在站点词典精确命中时允许扫描", () => {
+    const paragraphs = [
+        "Our Mythic+ tier list uses the in-game Mythic+ Score as its metric. We pull data from the official Blizzard leaderboard so that all runs are included, even those that weren't logged. The score shown in the boxes is the 95th percentile value for that spec. Select a spec to dig into detailed data about its build options.",
+        "See which classes and specs are the most powerful with our rankings table. This is the raw data that is used to generate our tier list. Use the columns to order the table by different metrics. Select a spec to dig into detailed data about its build options.",
+        "Find out which dungeons are the easiest to run. Our tier lists are updated daily and are based on all data matching your keystone level and affix filters. Dungeon ease is determined by the average score players achieve in each dungeon for your filters.",
+    ];
+    paragraphs.forEach((paragraph) => assert.ok(paragraph.length > 200));
+    const previousLocation = global.location;
+    global.location = { hostname: "www.archon.gg" };
+    try {
+        const state = {
+            indexes: {
+                "site-archon.json.gz": rwes.parseArtifact({
+                    id: {},
+                    en: Object.fromEntries(
+                        paragraphs.map((paragraph) => [paragraph, "大秘境排名说明"]),
+                    ),
+                }),
+            },
+        };
+        paragraphs.forEach((paragraph) => {
+            assert.strictEqual(rwes.shouldScanTextNodeText(paragraph, state), true);
+        });
+        assert.strictEqual(
+            rwes.shouldScanTextNodeText("A".repeat(250), state),
+            false,
+        );
+        assert.strictEqual(
+            rwes.shouldScanTextNodeText("A".repeat(2001), state),
+            false,
+        );
+    } finally {
+        if (previousLocation === undefined) delete global.location;
+        else global.location = previousLocation;
+    }
+});
+
 test("spellDescriptionTemplate: 将已计算英文数值安全套入中文模板", () => {
     const indexes = fakeIndexes({
         "spelldescription.json.gz": {},

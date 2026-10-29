@@ -853,6 +853,18 @@ const api = (function () {
         return count;
     }
 
+    function shouldScanTextNodeText(text, state) {
+        const normalized = normalizeVisibleText(text);
+        if (!normalized || !/[A-Za-z]/.test(normalized)) return false;
+        if (normalized.length <= 200) return true;
+        if (normalized.length > 2000) return false;
+        const siteDictionary = siteDictionaryForHost(
+            typeof location !== "undefined" ? location.hostname : "",
+        );
+        const siteIndex = siteDictionary && state.indexes[siteDictionary];
+        return Boolean(lookupEn(siteIndex, normalized, 2));
+    }
+
     function scanTextNodes(root, state) {
         const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
             acceptNode: function (node) {
@@ -877,8 +889,7 @@ const api = (function () {
                     )
                 )
                     return NodeFilter.FILTER_REJECT;
-                const t = node.nodeValue.trim();
-                if (t.length > 200 || !/[A-Za-z]/.test(t))
+                if (!shouldScanTextNodeText(node.nodeValue, state))
                     return NodeFilter.FILTER_REJECT;
                 return NodeFilter.FILTER_ACCEPT;
             },
@@ -1152,6 +1163,7 @@ const api = (function () {
         serializeBlockWithInlineSlots: serializeBlockWithInlineSlots,
         applyInlineBlockTranslation: applyInlineBlockTranslation,
         scanBlockTranslations: scanBlockTranslations,
+        shouldScanTextNodeText: shouldScanTextNodeText,
         lookupId: lookupId,
         lookupIdWithSiteOverride: lookupIdWithSiteOverride,
         lookupEnWithSiteOverride: lookupEnWithSiteOverride,
