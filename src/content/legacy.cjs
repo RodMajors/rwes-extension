@@ -747,6 +747,68 @@ const api = (function () {
         return true;
     }
 
+    const INLINE_BLOCK_SLOT_SELECTOR =
+        "a,button,[role=button],input,select,textarea";
+
+    function serializeBlockWithInlineSlots(element) {
+        const slots = [];
+        let source = "";
+        function walk(node) {
+            Array.from(node.childNodes || []).forEach(function (child) {
+                if (child.nodeType === 3) {
+                    source += child.nodeValue || "";
+                    return;
+                }
+                if (child.nodeType !== 1) return;
+                if (child.matches && child.matches(INLINE_BLOCK_SLOT_SELECTOR)) {
+                    const id = slots.length;
+                    slots.push(child);
+                    source += "{{" + id + "}}";
+                } else {
+                    walk(child);
+                }
+            });
+        }
+        walk(element);
+        return { key: normalizeVisibleText(source), slots: slots };
+    }
+
+    function applyInlineBlockTranslation(element, template, slots) {
+        const ast = parseBlockTemplate(template);
+        if (!ast || !slots || !slots.length) return false;
+        const structural = ast.children.filter(function (node) {
+            return node.type !== "text";
+        });
+        if (structural.some(function (node) { return node.type !== "slot"; })) return false;
+        if (structural.length !== slots.length) return false;
+        for (let i = 0; i < structural.length; i += 1) {
+            if (structural[i].id !== i) return false;
+        }
+        const owners = slots.map(function (slot) {
+            let owner = slot;
+            while (owner.parentElement && owner.parentElement !== element) {
+                owner = owner.parentElement;
+            }
+            return owner.parentElement === element ? owner : null;
+        });
+        if (owners.some(function (owner) { return !owner; })) return false;
+        if (new Set(owners).size !== owners.length) return false;
+        owners.forEach(function (owner, id) {
+            if (owner !== slots[id]) owner.replaceChildren(slots[id]);
+        });
+        const fragment = document.createDocumentFragment();
+        ast.children.forEach(function (node) {
+            if (node.type === "text") {
+                fragment.append(document.createTextNode(node.value));
+            } else {
+                fragment.append(owners[node.id]);
+            }
+        });
+        element.replaceChildren(fragment);
+        element.setAttribute(BLOCK_TRANSLATED_ATTR, "1");
+        return true;
+    }
+
     function scanBlockTranslations(root, state) {
         const siteDictionary = siteDictionaryForHost(location.hostname);
         const index = siteDictionary && state.indexes[siteDictionary];
@@ -760,6 +822,17 @@ const api = (function () {
         candidates.forEach(function (element) {
             if (element.hasAttribute(BLOCK_TRANSLATED_ATTR)) return;
             if (element.closest("[" + BLOCK_TRANSLATED_ATTR + "]")) return;
+            const inline = serializeBlockWithInlineSlots(element);
+            const inlineTemplate = inline.slots.length
+                ? lookupBlock(index, inline.key)
+                : null;
+            if (
+                inlineTemplate &&
+                applyInlineBlockTranslation(element, inlineTemplate, inline.slots)
+            ) {
+                count += 1;
+                return;
+            }
             const text = normalizeVisibleText(element.textContent);
             if (!text || text.length > 2000 || !/[A-Za-z]/.test(text)) return;
             const template = lookupBlock(index, text);
@@ -1095,6 +1168,8 @@ const api = (function () {
         parseBlockTemplate: parseBlockTemplate,
         validateBlockTree: validateBlockTree,
         applyBlockTranslation: applyBlockTranslation,
+        serializeBlockWithInlineSlots: serializeBlockWithInlineSlots,
+        applyInlineBlockTranslation: applyInlineBlockTranslation,
         scanBlockTranslations: scanBlockTranslations,
         lookupId: lookupId,
         lookupIdWithSiteOverride: lookupIdWithSiteOverride,

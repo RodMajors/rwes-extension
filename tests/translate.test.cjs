@@ -330,6 +330,83 @@ test("块级模板结构与 DOM 不一致时拒绝应用", () => {
     assert.strictEqual(rwes.validateBlockTree(ast, slotTree), false);
 });
 
+test("块级词典支持以链接占位符匹配并保留样式容器", () => {
+    class Fragment {
+        constructor() { this.children = []; }
+        append(node) { this.children.push(node); }
+    }
+    class TextNode {
+        constructor(value) { this.nodeType = 3; this.nodeValue = value; this.parentElement = null; }
+    }
+    class Element {
+        constructor(tag, className = "") {
+            this.nodeType = 1;
+            this.tagName = tag;
+            this.className = className;
+            this.parentElement = null;
+            this.childNodes = [];
+            this.attributes = {};
+        }
+        matches(selector) { return selector.split(",").includes(this.tagName.toLowerCase()); }
+        replaceChildren(...values) {
+            const next = values.length === 1 && values[0] instanceof Fragment
+                ? values[0].children
+                : values;
+            this.childNodes = next.slice();
+            this.childNodes.forEach((child) => { child.parentElement = this; });
+        }
+        setAttribute(name, value) { this.attributes[name] = value; }
+    }
+    const text = (value) => new TextNode(value);
+    const paragraph = new Element("P");
+    const simulationCraft = new Element("A");
+    simulationCraft.href = "http://www.simulationcraft.org/";
+    simulationCraft.replaceChildren(text("SimulationCraft"));
+    const monkColor = new Element("SPAN", "monk-color");
+    const patreon = new Element("A");
+    patreon.href = "https://www.patreon.com/bloodmallet";
+    patreon.replaceChildren(text("Patreon"));
+    monkColor.replaceChildren(
+        text(" You can generate your own charts by becoming a "),
+        patreon,
+        text(". "),
+    );
+    paragraph.replaceChildren(
+        text(" This site provides an overview about several simulateable aspects for almost all specs in World of Warcraft using "),
+        simulationCraft,
+        text(". These overviews are an entry point. "),
+        monkColor,
+    );
+
+    const serialized = rwes.serializeBlockWithInlineSlots(paragraph);
+    assert.strictEqual(
+        serialized.key,
+        "This site provides an overview about several simulateable aspects for almost all specs in World of Warcraft using {{0}}. These overviews are an entry point. You can generate your own charts by becoming a {{1}}.",
+    );
+    const originalDocument = global.document;
+    try {
+        global.document = {
+            createDocumentFragment: () => new Fragment(),
+            createTextNode: (value) => new TextNode(value),
+        };
+        assert.strictEqual(
+            rwes.applyInlineBlockTranslation(
+                paragraph,
+                "本网站利用 {{0}} 提供概览。通过成为 {{1}} 赞助者可生成图表。",
+                serialized.slots,
+            ),
+            true,
+        );
+        assert.strictEqual(paragraph.childNodes[1], simulationCraft);
+        assert.strictEqual(paragraph.childNodes[3], monkColor);
+        assert.strictEqual(monkColor.childNodes[0], patreon);
+        assert.strictEqual(monkColor.className, "monk-color");
+        assert.strictEqual(paragraph.attributes["data-rwes-block-zh"], "1");
+    } finally {
+        global.document = originalDocument;
+    }
+});
+
 test("parseArtifact + lookupZhId: 中文标题可反查法术 ID", () => {
     const index = rwes.parseArtifact({ id: { "1213649": "虚空射线" }, en: { "void ray": "虚空射线" } });
     assert.strictEqual(rwes.lookupZhId(index, "虚空射线"), "1213649");
