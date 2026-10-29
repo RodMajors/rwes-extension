@@ -1,5 +1,5 @@
 
-const { installWowhead } = require("./sites/wowhead.cjs");
+const { installWowhead, toChineseWowheadUrl } = require("./sites/wowhead.cjs");
 const { installWarcraftLogs } = require("./sites/warcraftlogs.cjs");
 const { installRaiderIo } = require("./sites/raiderio.cjs");
 const { installWowAnalyzer } = require("./sites/wowanalyzer.cjs");
@@ -987,42 +987,11 @@ const api = (function () {
          */
         function toCNWowheadUrl(url) {
             if (!url || typeof url !== "string") return url;
-            if (!/wowhead\.com/i.test(url)) return url;
-
-            // 测试服特殊处理
-            const testRegex = /wowhead\.com\/(beta|ptr|ptr-2|alpha)(\/|$)/i;
-            if (testRegex.test(url)) {
-                if (CONFIG.forceTestToCN || siteMatches(host, "liquidarmory")) {
-                    url = url.replace(testRegex, "wowhead.com/cn$2");
-                } else {
-                    return url;
-                }
-            }
-
-            // 子域名 → www.wowhead.com/cn
-            url = url.replace(
-                /^(https?:\/\/)(?:tw|de|es|mx|fr|it|pt|ru|ko|cn)\.wowhead\.com/i,
-                "$1www.wowhead.com/cn",
-            );
-
-            // 路径语言段 → /cn/
-            url = url.replace(
-                /(wowhead\.com\/)(?:tw|de|es|mx|fr|it|pt|ru|ko)(\/|$)/i,
-                "$1cn$2",
-            );
-
-            // 没有语言段时插入 /cn
-            if (!/wowhead\.com\/cn(\/|$)/i.test(url)) {
-                url = url.replace(
-                    /(wowhead\.com)(\/(?:classic|sod|cata|mop|tbc|wrath)?)?(\/|$)/i,
-                    "$1$2/cn$3",
-                );
-            }
-
-            // 升级 http → https
-            url = url.replace(/^http:/i, "https:");
-
-            return url;
+            return toChineseWowheadUrl(url, {
+                forceTest:
+                    CONFIG.forceTestToCN ||
+                    siteMatches(host, "liquidarmory"),
+            });
         }
 
         /**

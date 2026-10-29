@@ -17,24 +17,45 @@ function installMainCleanup() {
     return true;
 }
 
+function toChineseWowheadUrl(rawUrl, options = {}) {
+    let url;
+    try {
+        url = new URL(rawUrl);
+    } catch {
+        return rawUrl;
+    }
+    if (!/(?:^|\.)wowhead\.com$/i.test(url.hostname)) return rawUrl;
+
+    const isTest = /^\/(?:beta|ptr|ptr-2|alpha)(?:\/|$)/i.test(url.pathname);
+    if (isTest && !options.forceTest) return rawUrl;
+
+    let path = url.pathname
+        .replace(
+            /\/(tw|de|es|mx|fr|it|pt|ru|ko|cn)(\/|$)/i,
+            "/cn$2",
+        )
+        .replace(/\/(beta|ptr|ptr-2|alpha)(\/|$)/i, "/cn$2");
+    if (!/\/cn(?:\/|$)/i.test(path)) {
+        path = path.replace(
+            /^(\/(?:classic|sod|cata|mop|tbc|wrath)?)?(\/|$)/,
+            "$1/cn$2",
+        );
+    }
+
+    url.protocol = "https:";
+    url.hostname = "www.wowhead.com";
+    url.pathname = path;
+    return url.href;
+}
+
 function installWowhead(config) {
-    const host = location.hostname;
-    const path = location.pathname;
     if (config.autoRedirectWowheadCN) {
-        const isTest = /\/(beta|ptr|ptr-2|alpha)(\/|$)/i.test(path);
-        const alreadyCN = /\/cn(\/|$)/i.test(path) || host.startsWith("cn.");
-        if (!alreadyCN && (!isTest || config.forceTestToCN)) {
-            let newPath = path
-                .replace(/\/(tw|de|es|mx|fr|it|pt|ru|ko|cn)(\/|$)/i, "/cn$2")
-                .replace(/\/(beta|ptr|ptr-2|alpha)(\/|$)/i, "/cn$2");
-            if (!/\/cn(\/|$)/i.test(newPath)) {
-                newPath = newPath.replace(/^(\/(?:classic|sod|cata|mop|tbc|wrath)?)?(\/|$)/, "$1/cn$2");
-            }
-            const newUrl = location.origin.replace(/^(https?:\/\/)(?:[a-z]{2}\.)?/, "$1www.") + newPath + location.search + location.hash;
-            if (newUrl !== location.href) {
-                location.replace(newUrl);
-                return true;
-            }
+        const newUrl = toChineseWowheadUrl(location.href, {
+            forceTest: config.forceTestToCN,
+        });
+        if (newUrl !== location.href) {
+            location.replace(newUrl);
+            return true;
         }
     }
 
@@ -53,4 +74,4 @@ function installWowhead(config) {
     return false;
 }
 
-module.exports = { installWowhead, pruneMain };
+module.exports = { installWowhead, pruneMain, toChineseWowheadUrl };

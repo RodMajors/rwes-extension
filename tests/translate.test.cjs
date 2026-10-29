@@ -72,6 +72,48 @@ test("站点特判模块导出安装入口", () => {
     }
 });
 
+test("Wowhead 中文跳转不会重复添加 www", () => {
+    assert.strictEqual(
+        wowheadSite.toChineseWowheadUrl(
+            "https://www.wowhead.com/spell=2825/bloodlust",
+        ),
+        "https://www.wowhead.com/cn/spell=2825/bloodlust",
+    );
+    assert.strictEqual(
+        wowheadSite.toChineseWowheadUrl(
+            "https://wowhead.com/spell=2825/bloodlust?foo=1#bar",
+        ),
+        "https://www.wowhead.com/cn/spell=2825/bloodlust?foo=1#bar",
+    );
+    assert.strictEqual(
+        wowheadSite.toChineseWowheadUrl(
+            "https://de.wowhead.com/spell=2825/bloodlust",
+        ),
+        "https://www.wowhead.com/cn/spell=2825/bloodlust",
+    );
+    assert.strictEqual(
+        wowheadSite.toChineseWowheadUrl(
+            "https://www.wowhead.com/cn/spell=2825/bloodlust",
+        ),
+        "https://www.wowhead.com/cn/spell=2825/bloodlust",
+    );
+    assert.doesNotMatch(
+        wowheadSite.toChineseWowheadUrl(
+            "https://www.wowhead.com/spell=2825/bloodlust",
+        ),
+        /www\.www\./,
+    );
+});
+
+test("Wowhead 测试服链接仅在明确允许时切换简中", () => {
+    const ptr = "https://www.wowhead.com/ptr-2/item=273649/example";
+    assert.strictEqual(wowheadSite.toChineseWowheadUrl(ptr), ptr);
+    assert.strictEqual(
+        wowheadSite.toChineseWowheadUrl(ptr, { forceTest: true }),
+        "https://www.wowhead.com/cn/item=273649/example",
+    );
+});
+
 test("MythicTrap 中文路径规范化", () => {
     assert.strictEqual(mythicTrapSite.chinesePath("/venomous-abyss/boss/mythic"), "/cn/venomous-abyss/boss/mythic");
     assert.strictEqual(mythicTrapSite.chinesePath("/fr/venomous-abyss"), "/cn/venomous-abyss");
