@@ -728,7 +728,7 @@ const api = (function () {
         const ast = parseBlockTemplate(template);
         if (!ast) return false;
         const slotTree = blockSlotTree(element);
-        if (!slotTree.slots.length || !validateBlockTree(ast, slotTree)) return false;
+        if (!validateBlockTree(ast, slotTree)) return false;
         function render(nodes) {
             const fragment = document.createDocumentFragment();
             nodes.forEach(function (node) {
@@ -748,7 +748,7 @@ const api = (function () {
     }
 
     const INLINE_BLOCK_SLOT_SELECTOR =
-        "a,button,[role=button],input,select,textarea";
+        "a,code,button,[role=button],input,select,textarea";
 
     function serializeBlockWithInlineSlots(element) {
         const slots = [];
@@ -773,7 +773,7 @@ const api = (function () {
         return { key: normalizeVisibleText(source), slots: slots };
     }
 
-    function applyInlineBlockTranslation(element, template, slots) {
+    function applyInlineBlockTranslation(element, template, slots, index) {
         const ast = parseBlockTemplate(template);
         if (!ast || !slots || !slots.length) return false;
         const structural = ast.children.filter(function (node) {
@@ -793,6 +793,13 @@ const api = (function () {
         });
         if (owners.some(function (owner) { return !owner; })) return false;
         if (new Set(owners).size !== owners.length) return false;
+        slots.forEach(function (slot) {
+            const hasElementChildren = slot.children && slot.children.length;
+            const translatedLabel = hasElementChildren
+                ? null
+                : lookupBlock(index, slot.textContent);
+            if (translatedLabel) slot.textContent = translatedLabel;
+        });
         owners.forEach(function (owner, id) {
             if (owner !== slots[id]) owner.replaceChildren(slots[id]);
         });
@@ -828,7 +835,12 @@ const api = (function () {
                 : null;
             if (
                 inlineTemplate &&
-                applyInlineBlockTranslation(element, inlineTemplate, inline.slots)
+                applyInlineBlockTranslation(
+                    element,
+                    inlineTemplate,
+                    inline.slots,
+                    index,
+                )
             ) {
                 count += 1;
                 return;

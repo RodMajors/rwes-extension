@@ -355,6 +355,12 @@ test("块级词典支持以链接占位符匹配并保留样式容器", () => {
             this.childNodes = next.slice();
             this.childNodes.forEach((child) => { child.parentElement = this; });
         }
+        get textContent() {
+            return this.childNodes.map((child) =>
+                child.nodeType === 3 ? child.nodeValue : child.textContent,
+            ).join("");
+        }
+        set textContent(value) { this.replaceChildren(new TextNode(value)); }
         setAttribute(name, value) { this.attributes[name] = value; }
     }
     const text = (value) => new TextNode(value);
@@ -394,13 +400,77 @@ test("块级词典支持以链接占位符匹配并保留样式容器", () => {
                 paragraph,
                 "本网站利用 {{0}} 提供概览。通过成为 {{1}} 赞助者可生成图表。",
                 serialized.slots,
+                rwes.parseArtifact({
+                    blocks: {
+                        "simulationcraft": "模拟工具",
+                        "patreon": "Patreon",
+                    },
+                }),
             ),
             true,
         );
         assert.strictEqual(paragraph.childNodes[1], simulationCraft);
+        assert.strictEqual(simulationCraft.textContent, "模拟工具");
         assert.strictEqual(paragraph.childNodes[3], monkColor);
         assert.strictEqual(monkColor.childNodes[0], patreon);
         assert.strictEqual(monkColor.className, "monk-color");
+        assert.strictEqual(paragraph.attributes["data-rwes-block-zh"], "1");
+    } finally {
+        global.document = originalDocument;
+    }
+});
+
+test("块级词典将链接和 code 按 DOM 顺序序列化", () => {
+    const text = (value) => ({ nodeType: 3, nodeValue: value });
+    const element = (tag, children = []) => ({
+        nodeType: 1,
+        tagName: tag.toUpperCase(),
+        childNodes: children,
+        matches: (selector) => selector.split(",").includes(tag),
+    });
+    const paragraph = element("p", [
+        text('It uses the "tier appropriate" '),
+        element("a", [text("SimulationCraft profile")]),
+        text(". If the fight style is neither "),
+        element("code", [text("Patchwerk")]),
+        text(" nor "),
+        element("code", [text("Casting Patchwerk")]),
+        text(' a "tier appropriate" '),
+        element("a", [text("fallback profile")]),
+        text(" is used to improve the data quality."),
+    ]);
+    const serialized = rwes.serializeBlockWithInlineSlots(paragraph);
+    assert.strictEqual(
+        serialized.key,
+        'It uses the "tier appropriate" {{0}}. If the fight style is neither {{1}} nor {{2}} a "tier appropriate" {{3}} is used to improve the data quality.',
+    );
+    assert.deepStrictEqual(serialized.slots.map((slot) => slot.tagName), [
+        "A", "CODE", "CODE", "A",
+    ]);
+});
+
+test("纯文本块无需占位符也能应用翻译", () => {
+    class Fragment {
+        constructor() { this.children = []; }
+        append(node) { this.children.push(node); }
+    }
+    const paragraph = {
+        attributes: {},
+        querySelectorAll: () => [],
+        replaceChildren(fragment) { this.children = fragment.children; },
+        setAttribute(name, value) { this.attributes[name] = value; },
+    };
+    const originalDocument = global.document;
+    try {
+        global.document = {
+            createDocumentFragment: () => new Fragment(),
+            createTextNode: (value) => ({ nodeType: 3, nodeValue: value }),
+        };
+        assert.strictEqual(
+            rwes.applyBlockTranslation(paragraph, "这是一个纯文本块。"),
+            true,
+        );
+        assert.strictEqual(paragraph.children[0].nodeValue, "这是一个纯文本块。");
         assert.strictEqual(paragraph.attributes["data-rwes-block-zh"], "1");
     } finally {
         global.document = originalDocument;
