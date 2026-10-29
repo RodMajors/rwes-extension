@@ -242,6 +242,94 @@ test("parseArtifact + lookupId", () => {
     assert.strictEqual(rwes.lookupId(idx, 99), null);
 });
 
+test("块级词典规范化连续空白并命中", () => {
+    const index = rwes.parseArtifact({
+        id: {},
+        en: {},
+        blocks: { "This site\n provides\u00a0an overview.": "本站提供概述。" },
+    });
+    assert.strictEqual(
+        rwes.lookupBlock(index, "  This site provides   an overview. "),
+        "本站提供概述。",
+    );
+});
+
+test("块级模板保留链接和嵌套样式节点", () => {
+    class FakeFragment {
+        constructor() { this.children = []; }
+        append(node) { this.children.push(node); }
+    }
+    class FakeElement {
+        constructor(tag, className = "") {
+            this.tagName = tag;
+            this.className = className;
+            this.parentElement = null;
+            this.children = [];
+            this.attributes = {};
+        }
+        querySelectorAll() {
+            const out = [];
+            const visit = (node) => {
+                node.children.forEach((child) => {
+                    if (child instanceof FakeElement) { out.push(child); visit(child); }
+                });
+            };
+            visit(this);
+            return out;
+        }
+        replaceChildren(fragment) {
+            this.children = fragment.children.slice();
+            this.children.forEach((child) => {
+                if (child instanceof FakeElement) child.parentElement = this;
+            });
+        }
+        setAttribute(name, value) { this.attributes[name] = value; }
+    }
+    const paragraph = new FakeElement("P");
+    const simulationCraft = new FakeElement("A");
+    simulationCraft.href = "http://www.simulationcraft.org/";
+    const colored = new FakeElement("SPAN", "monk-color");
+    const patreon = new FakeElement("A");
+    patreon.href = "https://www.patreon.com/bloodmallet";
+    paragraph.children = [simulationCraft, colored];
+    simulationCraft.parentElement = paragraph;
+    colored.parentElement = paragraph;
+    colored.children = [patreon];
+    patreon.parentElement = colored;
+
+    const originalDocument = global.document;
+    try {
+        global.document = {
+            createDocumentFragment: () => new FakeFragment(),
+            createTextNode: (value) => ({ nodeType: 3, value }),
+        };
+        const applied = rwes.applyBlockTranslation(
+            paragraph,
+            "本站使用 {{0}}。{{#1}}成为 {{2}} 后可生成图表。{{/1}}",
+        );
+        assert.strictEqual(applied, true);
+        assert.strictEqual(paragraph.children[1], simulationCraft);
+        assert.strictEqual(paragraph.children[3], colored);
+        assert.strictEqual(colored.children[1], patreon);
+        assert.strictEqual(simulationCraft.href, "http://www.simulationcraft.org/");
+        assert.strictEqual(colored.className, "monk-color");
+        assert.strictEqual(patreon.href, "https://www.patreon.com/bloodmallet");
+        assert.strictEqual(paragraph.attributes["data-rwes-block-zh"], "1");
+    } finally {
+        global.document = originalDocument;
+    }
+});
+
+test("块级模板结构与 DOM 不一致时拒绝应用", () => {
+    const element = {
+        querySelectorAll: () => [{ parentElement: null }],
+    };
+    element.querySelectorAll()[0].parentElement = element;
+    const ast = rwes.parseBlockTemplate("错误 {{#0}}嵌套{{/0}}");
+    const slotTree = { slots: [{}], children: new Map([[null, [0]], [0, []]]) };
+    assert.strictEqual(rwes.validateBlockTree(ast, slotTree), false);
+});
+
 test("parseArtifact + lookupZhId: 中文标题可反查法术 ID", () => {
     const index = rwes.parseArtifact({ id: { "1213649": "虚空射线" }, en: { "void ray": "虚空射线" } });
     assert.strictEqual(rwes.lookupZhId(index, "虚空射线"), "1213649");

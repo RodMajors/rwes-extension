@@ -96,7 +96,16 @@ const api = (function () {
 
     function parseArtifact(obj) {
         const byId = new Map(Object.entries((obj && obj.id) || {}));
-        const byEn = new Map(Object.entries((obj && obj.en) || {}));
+        const byEn = new Map(
+            Object.entries((obj && obj.en) || {}).map(function (entry) {
+                return [normalizeVisibleText(entry[0]).toLowerCase(), entry[1]];
+            }),
+        );
+        const byBlock = new Map(
+            Object.entries((obj && obj.blocks) || {}).map(function (entry) {
+                return [normalizeVisibleText(entry[0]).toLowerCase(), entry[1]];
+            }),
+        );
         const byZh = new Map();
         for (const [id, zh] of byId) {
             if (typeof zh === "string" && zh.trim()) {
@@ -108,6 +117,7 @@ const api = (function () {
         return {
             byId: byId,
             byEn: byEn,
+            byBlock: byBlock,
             byZh: byZh,
         };
     }
@@ -119,9 +129,21 @@ const api = (function () {
 
     function lookupEn(index, name, minLen) {
         if (!index) return null;
-        const n = String(name).trim().toLowerCase();
+        const n = normalizeVisibleText(name).toLowerCase();
         if (!n || n.length < (minLen || 1)) return null;
         return index.byEn.get(n) || null;
+    }
+
+    function normalizeVisibleText(value) {
+        return String(value == null ? "" : value)
+            .replace(/[\s\u00a0]+/g, " ")
+            .trim();
+    }
+
+    function lookupBlock(index, text) {
+        if (!index || !index.byBlock) return null;
+        const key = normalizeVisibleText(text).toLowerCase();
+        return key ? index.byBlock.get(key) || null : null;
     }
 
     function lookupZhId(index, name) {
@@ -621,6 +643,131 @@ const api = (function () {
         );
     }
 
+    const BLOCK_TRANSLATED_ATTR = "data-rwes-block-zh";
+    const BLOCK_CANDIDATE_SELECTOR =
+        "p,li,blockquote,figcaption,dd,dt,h1,h2,h3,h4,h5,h6";
+
+    function parseBlockTemplate(template) {
+        const source = String(template || "");
+        const root = { type: "root", children: [] };
+        const stack = [root];
+        const token = /\{\{([#/]?)(\d+)\}\}/g;
+        let cursor = 0;
+        let match;
+        while ((match = token.exec(source))) {
+            if (match.index > cursor) {
+                stack[stack.length - 1].children.push({
+                    type: "text",
+                    value: source.slice(cursor, match.index),
+                });
+            }
+            const marker = match[1];
+            const id = Number(match[2]);
+            if (marker === "/") {
+                const current = stack[stack.length - 1];
+                if (stack.length === 1 || current.id !== id) return null;
+                stack.pop();
+            } else {
+                const node = {
+                    type: marker === "#" ? "wrapper" : "slot",
+                    id: id,
+                    children: [],
+                };
+                stack[stack.length - 1].children.push(node);
+                if (marker === "#") stack.push(node);
+            }
+            cursor = token.lastIndex;
+        }
+        if (stack.length !== 1) return null;
+        if (cursor < source.length) {
+            root.children.push({ type: "text", value: source.slice(cursor) });
+        }
+        return root;
+    }
+
+    function blockSlotTree(element) {
+        const slots = Array.from(element.querySelectorAll("*"));
+        const ids = new Map(slots.map(function (node, id) { return [node, id]; }));
+        const children = new Map([[null, []]]);
+        slots.forEach(function (node, id) {
+            let parent = node.parentElement;
+            while (parent && parent !== element && !ids.has(parent)) {
+                parent = parent.parentElement;
+            }
+            const parentId = parent === element ? null : ids.get(parent);
+            if (!children.has(parentId)) children.set(parentId, []);
+            children.get(parentId).push(id);
+            if (!children.has(id)) children.set(id, []);
+        });
+        return { slots: slots, children: children };
+    }
+
+    function validateBlockTree(ast, slotTree) {
+        const seen = new Set();
+        function visit(nodes, parentId) {
+            const structural = nodes.filter(function (node) {
+                return node.type === "slot" || node.type === "wrapper";
+            });
+            const expected = slotTree.children.get(parentId) || [];
+            if (structural.length !== expected.length) return false;
+            for (let i = 0; i < structural.length; i += 1) {
+                const node = structural[i];
+                if (node.id !== expected[i] || seen.has(node.id)) return false;
+                seen.add(node.id);
+                const childIds = slotTree.children.get(node.id) || [];
+                if (childIds.length && node.type !== "wrapper") return false;
+                if (!childIds.length && node.type !== "slot") return false;
+                if (node.type === "wrapper" && !visit(node.children, node.id)) return false;
+            }
+            return true;
+        }
+        return visit(ast.children, null) && seen.size === slotTree.slots.length;
+    }
+
+    function applyBlockTranslation(element, template) {
+        const ast = parseBlockTemplate(template);
+        if (!ast) return false;
+        const slotTree = blockSlotTree(element);
+        if (!slotTree.slots.length || !validateBlockTree(ast, slotTree)) return false;
+        function render(nodes) {
+            const fragment = document.createDocumentFragment();
+            nodes.forEach(function (node) {
+                if (node.type === "text") {
+                    fragment.append(document.createTextNode(node.value));
+                    return;
+                }
+                const source = slotTree.slots[node.id];
+                if (node.type === "wrapper") source.replaceChildren(render(node.children));
+                fragment.append(source);
+            });
+            return fragment;
+        }
+        element.replaceChildren(render(ast.children));
+        element.setAttribute(BLOCK_TRANSLATED_ATTR, "1");
+        return true;
+    }
+
+    function scanBlockTranslations(root, state) {
+        const siteDictionary = siteDictionaryForHost(location.hostname);
+        const index = siteDictionary && state.indexes[siteDictionary];
+        if (!index || !index.byBlock || !index.byBlock.size) return 0;
+        const candidates = [];
+        if (root.matches && root.matches(BLOCK_CANDIDATE_SELECTOR)) candidates.push(root);
+        if (root.querySelectorAll) {
+            candidates.push(...root.querySelectorAll(BLOCK_CANDIDATE_SELECTOR));
+        }
+        let count = 0;
+        candidates.forEach(function (element) {
+            if (element.hasAttribute(BLOCK_TRANSLATED_ATTR)) return;
+            if (element.closest("[" + BLOCK_TRANSLATED_ATTR + "]")) return;
+            const text = normalizeVisibleText(element.textContent);
+            if (!text || text.length > 2000 || !/[A-Za-z]/.test(text)) return;
+            const template = lookupBlock(index, text);
+            if (template && applyBlockTranslation(element, template)) count += 1;
+        });
+        return count;
+    }
+
     function scanTextNodes(root, state) {
         const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
             acceptNode: function (node) {
@@ -638,7 +785,11 @@ const api = (function () {
                     return NodeFilter.FILTER_REJECT;
                 if (
                     p.closest &&
-                    p.closest("script,style,textarea,[contenteditable='true']")
+                    p.closest(
+                        "script,style,textarea,[contenteditable='true'],[" +
+                            BLOCK_TRANSLATED_ATTR +
+                            "]",
+                    )
                 )
                     return NodeFilter.FILTER_REJECT;
                 const t = node.nodeValue.trim();
@@ -685,6 +836,7 @@ const api = (function () {
     function applyTranslations(root, state) {
         if (!state.indexes) return;
         const scope = root || document.body;
+        scanBlockTranslations(scope, state);
         scope
             .querySelectorAll('a[href*="item="], a[href*="spell="]')
             .forEach(function (el) {
@@ -938,6 +1090,12 @@ const api = (function () {
         SUFFIX_CN: SUFFIX_CN,
         PREFIX_RULES: PREFIX_RULES,
         parseArtifact: parseArtifact,
+        normalizeVisibleText: normalizeVisibleText,
+        lookupBlock: lookupBlock,
+        parseBlockTemplate: parseBlockTemplate,
+        validateBlockTree: validateBlockTree,
+        applyBlockTranslation: applyBlockTranslation,
+        scanBlockTranslations: scanBlockTranslations,
         lookupId: lookupId,
         lookupIdWithSiteOverride: lookupIdWithSiteOverride,
         lookupEnWithSiteOverride: lookupEnWithSiteOverride,
