@@ -6,10 +6,11 @@ const { installWowAnalyzer } = require("./sites/wowanalyzer.cjs");
 const { installMaxroll } = require("./sites/maxroll.cjs");
 const { installMythicTrap } = require("./sites/mythictrap.cjs");
 const { installRaidbots } = require("./sites/raidbots.cjs");
-const { isLiquidArmoryHost, installLiquidArmory } = require("./sites/liquidarmory.cjs");
+const { installLiquidArmory } = require("./sites/liquidarmory.cjs");
 const { installIcyVeins } = require("./sites/icyveins.cjs");
 const { installKeystoneLoot } = require("./sites/keystoneloot.cjs");
 const { installMurlok } = require("./sites/murlok.cjs");
+const { siteMatches, siteDictionaryForHost } = require("../shared/sites.cjs");
 
 const api = (function () {
     "use strict";
@@ -67,35 +68,6 @@ const api = (function () {
         "custom",
     ])).map(function (name) { return name + ".json.gz"; });
 
-    const SITE_DICTIONARIES = {
-        "maxroll.gg": "site-maxroll.json.gz",
-        "icy-veins.com": "site-icy-veins.json.gz",
-        "warcraftlogs.com": "site-warcraftlogs.json.gz",
-        "raiderio.com": "site-raiderio.json.gz",
-        "raider.io": "site-raiderio.json.gz",
-        "wowanalyzer.com": "site-wowanalyzer.json.gz",
-        "mythictrap.com": "site-mythictrap.json.gz",
-        "raidbots.com": "site-raidbots.json.gz",
-        "liquidarmory.com": "site-liquidarmory.json.gz",
-        "keystoneloot.io": "site-keystoneloot.json.gz",
-        "murlok.io": "site-murlok.json.gz",
-        "archon.gg": "site-archon.json.gz",
-        "mythicstats.com": "site-mythicstats.json.gz",
-        "wipefest.gg": "site-wipefest.json.gz",
-        "bloodmallet.com": "site-bloodmallet.json.gz",
-        "questionablyepic.com": "site-questionablyepic.json.gz",
-        "simulationcraft.org": "site-simulationcraft.json.gz",
-        "wowhead.com": "site-wowhead.json.gz",
-        "lorrgs.io": "site-lorrgs.json.gz",
-    };
-
-    function siteDictionaryForHost(hostname) {
-        const host = String(hostname || "").toLowerCase();
-        const suffix = Object.keys(SITE_DICTIONARIES).find(function (domain) {
-            return host === domain || host.endsWith("." + domain);
-        });
-        return suffix ? SITE_DICTIONARIES[suffix] : null;
-    }
 
     function diffManifest(localMeta, remote) {
         const toDownload = [];
@@ -753,19 +725,19 @@ const api = (function () {
         const host = location.hostname;
 
         // ==================== 各站点特判 ====================
-        if (host.includes("wowhead.com") && installWowhead(CONFIG)) return;
-        if (host.includes("warcraftlogs.com") && installWarcraftLogs(CONFIG)) return;
-        if (host === "raiderio.com" || host.endsWith(".raiderio.com") || host.includes("raider.io")) installRaiderIo();
-        if (host.includes("wowanalyzer.com")) installWowAnalyzer();
-        if (host.includes("mythictrap.com") && installMythicTrap(CONFIG)) return;
-        if (host.includes("raidbots.com")) installRaidbots();
-        if (isLiquidArmoryHost(host)) {
+        if (siteMatches(host, "wowhead") && installWowhead(CONFIG)) return;
+        if (siteMatches(host, "warcraftlogs") && installWarcraftLogs(CONFIG)) return;
+        if (siteMatches(host, "raiderio")) installRaiderIo();
+        if (siteMatches(host, "wowanalyzer")) installWowAnalyzer();
+        if (siteMatches(host, "mythictrap") && installMythicTrap(CONFIG)) return;
+        if (siteMatches(host, "raidbots")) installRaidbots();
+        if (siteMatches(host, "liquidarmory")) {
             // LiquidArmory 使用 ptr-2 Wowhead 链接，强制转换到简中正式路径。
             installLiquidArmory();
         }
-        if (host.includes("icy-veins.com")) installIcyVeins();
-        if (host.includes("keystoneloot.io")) installKeystoneLoot();
-        if (host.includes("murlok.io")) installMurlok();
+        if (siteMatches(host, "icy-veins")) installIcyVeins();
+        if (siteMatches(host, "keystoneloot")) installKeystoneLoot();
+        if (siteMatches(host, "murlok")) installMurlok();
 
         // ==================== 6. 全站 Wowhead 链接 + 鼠标提示强制简中 ====================
         // 设置全局 tooltip 域名为简中
@@ -783,7 +755,7 @@ const api = (function () {
             // 测试服特殊处理
             const testRegex = /wowhead\.com\/(beta|ptr|ptr-2|alpha)(\/|$)/i;
             if (testRegex.test(url)) {
-                if (CONFIG.forceTestToCN || isLiquidArmoryHost(host)) {
+                if (CONFIG.forceTestToCN || siteMatches(host, "liquidarmory")) {
                     url = url.replace(testRegex, "wowhead.com/cn$2");
                 } else {
                     return url;
@@ -889,7 +861,7 @@ const api = (function () {
 
         const dictState = { indexes: {} };
         let maxrollHandlers = null;
-        if (host.endsWith("maxroll.gg")) {
+        if (siteMatches(host, "maxroll")) {
             const descriptionTranslator = function (text, spellId) {
                 return spellDescriptionTemplate(text, spellId, dictState.indexes);
             };
@@ -960,6 +932,7 @@ const api = (function () {
         spellDescriptionTemplate: spellDescriptionTemplate,
         renderSpellDescription: renderSpellDescription,
         siteDictionaryForHost: siteDictionaryForHost,
+        siteMatches: siteMatches,
         splitSuffix: splitSuffix,
         NAME_BLOCKLIST: NAME_BLOCKLIST,
         SUFFIX_CN: SUFFIX_CN,

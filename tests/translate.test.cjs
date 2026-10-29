@@ -36,6 +36,11 @@ test("站点特判模块导出安装入口", () => {
     assert.strictEqual(typeof icyVeinsSite.installIcyVeins, "function");
     assert.strictEqual(typeof keystoneLootSite.installKeystoneLoot, "function");
     assert.strictEqual(typeof murlokSite.installMurlok, "function");
+    assert.strictEqual(rwes.siteMatches("wipefest.gg", "wipefest"), true);
+    assert.strictEqual(rwes.siteMatches("www.wipefest.gg", "wipefest"), true);
+    assert.strictEqual(rwes.siteMatches("raid.wipefest.gg", "wipefest"), true);
+    assert.strictEqual(rwes.siteMatches("notwipefest.gg", "wipefest"), false);
+    assert.strictEqual(rwes.siteMatches("evilwipefest.gg.example.com", "wipefest"), false);
     assert.match(murlokSite.layoutCss(), /body > div\.vi-layout/);
     assert.match(murlokSite.layoutCss(), /vi-layout-content/);
     assert.match(murlokSite.layoutCss(), /padding-right: clamp\(12px, 1.5vw, 24px\)/);
@@ -124,9 +129,20 @@ test("Raider.io 特判只处理右侧广告栏", () => {
 });
 
 test("Raider.io 支持 raiderio.com 裸域", () => {
-    const constants = require("../src/shared/constants.js");
-    assert.ok(constants.SUPPORTED_MATCHES.includes("*://raiderio.com/*"));
-    assert.ok(constants.SUPPORTED_MATCHES.includes("*://*.raiderio.com/*"));
+    const sites = require("../src/shared/sites.cjs");
+    assert.ok(sites.SUPPORTED_MATCHES.includes("*://raiderio.com/*"));
+    assert.ok(sites.SUPPORTED_MATCHES.includes("*://*.raiderio.com/*"));
+});
+
+test("所有站点同时生成裸域和子域 match 且无重复", () => {
+    const sites = require("../src/shared/sites.cjs");
+    assert.strictEqual(new Set(sites.SUPPORTED_MATCHES).size, sites.SUPPORTED_MATCHES.length);
+    for (const [, domains] of sites.SITE_DEFINITIONS) {
+        for (const domain of domains) {
+            assert.ok(sites.SUPPORTED_MATCHES.includes(`*://${domain}/*`), domain);
+            assert.ok(sites.SUPPORTED_MATCHES.includes(`*://*.${domain}/*`), domain);
+        }
+    }
 });
 
 test("WowAnalyzer 特判删除广告槽位所属链接", () => {
