@@ -146,6 +146,39 @@ const api = (function () {
         return key ? index.byBlock.get(key) || null : null;
     }
 
+    function escapeRegExp(value) {
+        return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+
+    function lookupBlockMatch(index, text) {
+        const normalized = normalizeVisibleText(text);
+        const exact = lookupBlock(index, normalized);
+        if (exact) return { template: exact, captures: {} };
+        if (!index || !index.byBlock) return null;
+        for (const [source, template] of index.byBlock.entries()) {
+            const token = /\{\{(\d+)\}\}/g;
+            const ids = [];
+            let cursor = 0;
+            let pattern = "^";
+            let match;
+            while ((match = token.exec(source))) {
+                pattern += escapeRegExp(source.slice(cursor, match.index));
+                const id = Number(match[1]);
+                if (!ids.includes(id)) ids.push(id);
+                pattern += "(.+?)";
+                cursor = token.lastIndex;
+            }
+            if (!ids.length) continue;
+            pattern += escapeRegExp(source.slice(cursor)) + "$";
+            const result = new RegExp(pattern, "i").exec(normalized);
+            if (!result) continue;
+            const captures = {};
+            ids.forEach((id, index) => { captures[id] = result[index + 1]; });
+            return { template, captures };
+        }
+        return null;
+    }
+
     function lookupZhId(index, name) {
         if (!index || !index.byZh || !name) return null;
         const ids = index.byZh.get(String(name).trim());
@@ -816,6 +849,36 @@ const api = (function () {
         return true;
     }
 
+    function applyTextBlockTranslation(element, template, captures) {
+        const output = String(template || "").replace(
+            /\{\{(\d+)\}\}/g,
+            function (token, id) {
+                return Object.prototype.hasOwnProperty.call(captures || {}, id)
+                    ? captures[id]
+                    : token;
+            },
+        );
+        const textNodes = [];
+        function collect(node) {
+            Array.from(node.childNodes || []).forEach(function (child) {
+                if (child.nodeType === 3) textNodes.push(child);
+                else if (child.nodeType === 1) collect(child);
+            });
+        }
+        collect(element);
+        const first = textNodes.find((node) => node.nodeValue.trim());
+        if (first) {
+            first.nodeValue = output;
+            textNodes.forEach(function (node) {
+                if (node !== first) node.nodeValue = "";
+            });
+        } else {
+            element.append(document.createTextNode(output));
+        }
+        element.setAttribute(BLOCK_TRANSLATED_ATTR, "1");
+        return true;
+    }
+
     function scanBlockTranslations(root, state) {
         const siteDictionary = siteDictionaryForHost(location.hostname);
         const index = siteDictionary && state.indexes[siteDictionary];
@@ -847,8 +910,10 @@ const api = (function () {
             }
             const text = normalizeVisibleText(element.textContent);
             if (!text || text.length > 2000 || !/[A-Za-z]/.test(text)) return;
-            const template = lookupBlock(index, text);
-            if (template && applyBlockTranslation(element, template)) count += 1;
+            const match = lookupBlockMatch(index, text);
+            if (match && applyTextBlockTranslation(element, match.template, match.captures)) {
+                count += 1;
+            }
         });
         return count;
     }
