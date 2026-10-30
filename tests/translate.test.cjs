@@ -730,6 +730,59 @@ test("Archon H1 内的 span 文本可通过 blocks 通配符完整扫描", () =>
     }
 });
 
+test("块级翻译节点在 SPA 文本更新后会重新匹配新的通配符捕获值", () => {
+    const originalLocation = global.location;
+    global.location = { hostname: "www.archon.gg" };
+    const textNode = { nodeType: 3, nodeValue: "Midnight DPS Rankings and Mythic+ Tier List" };
+    const span = {
+        nodeType: 1,
+        tagName: "SPAN",
+        childNodes: [textNode],
+        parentElement: null,
+    };
+    textNode.parentElement = span;
+    const heading = {
+        nodeType: 1,
+        tagName: "H1",
+        childNodes: [span],
+        attributes: {},
+        parentElement: null,
+        matches: (selector) => selector.split(",").includes("h1"),
+        querySelectorAll: () => [],
+        hasAttribute(name) { return Object.prototype.hasOwnProperty.call(this.attributes, name); },
+        setAttribute(name, value) { this.attributes[name] = value; },
+        removeAttribute(name) { delete this.attributes[name]; },
+        closest: () => null,
+        get textContent() { return this.childNodes.map((node) => node.textContent).join(""); },
+    };
+    Object.defineProperty(span, "textContent", {
+        get() { return this.childNodes.map((node) => node.nodeValue || node.textContent || "").join(""); },
+    });
+    const indexes = {
+        "site-archon.json.gz": rwes.parseArtifact({
+            id: {},
+            en: {},
+            blocks: {
+                "Midnight {{0}} Rankings and Mythic+ Tier List": "至暗之夜 {{0}} 排名与大秘境梯队排行",
+            },
+        }),
+    };
+    try {
+        assert.strictEqual(rwes.scanBlockTranslations(heading, { indexes }), 1);
+        assert.strictEqual(textNode.nodeValue, "至暗之夜 DPS 排名与大秘境梯队排行");
+        assert.ok(heading.attributes["data-rwes-block-output"].includes("DPS"));
+
+        // 模拟 React/SPA 复用 H1 和 span，只替换文本并保留旧翻译标记。
+        textNode.nodeValue = "Midnight Tank Rankings and Mythic+ Tier List";
+        assert.strictEqual(rwes.scanBlockTranslations(heading, { indexes }), 1);
+        assert.strictEqual(textNode.nodeValue, "至暗之夜 Tank 排名与大秘境梯队排行");
+        assert.ok(heading.attributes["data-rwes-block-output"].includes("Tank"));
+    } finally {
+        if (originalLocation === undefined) delete global.location;
+        else global.location = originalLocation;
+    }
+});
+
 test("spellDescriptionTemplate: 将已计算英文数值安全套入中文模板", () => {
     const indexes = fakeIndexes({
         "spelldescription.json.gz": {},

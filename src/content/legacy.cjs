@@ -677,8 +677,39 @@ const api = (function () {
     }
 
     const BLOCK_TRANSLATED_ATTR = "data-rwes-block-zh";
+    // 记录最近一次块级翻译的结果。SPA 可能复用同一个元素节点并只更新其文本，
+    // 因此不能仅凭 data-rwes-block-zh 判断该节点永远不需要再次扫描。
+    const BLOCK_OUTPUT_ATTR = "data-rwes-block-output";
     const BLOCK_CANDIDATE_SELECTOR =
         "p,li,blockquote,figcaption,dd,dt,h1,h2,h3,h4,h5,h6";
+
+    function readBlockAttribute(element, name) {
+        if (!element) return null;
+        if (typeof element.getAttribute === "function") {
+            return element.getAttribute(name);
+        }
+        if (element.attributes && Object.prototype.hasOwnProperty.call(element.attributes, name)) {
+            return element.attributes[name];
+        }
+        return null;
+    }
+
+    function removeBlockAttribute(element, name) {
+        if (!element) return;
+        if (typeof element.removeAttribute === "function") {
+            element.removeAttribute(name);
+            return;
+        }
+        if (element.attributes) delete element.attributes[name];
+    }
+
+    function markBlockTranslated(element) {
+        element.setAttribute(BLOCK_TRANSLATED_ATTR, "1");
+        element.setAttribute(
+            BLOCK_OUTPUT_ATTR,
+            normalizeVisibleText(element.textContent || ""),
+        );
+    }
 
     function parseBlockTemplate(template) {
         const source = String(template || "");
@@ -776,7 +807,7 @@ const api = (function () {
             return fragment;
         }
         element.replaceChildren(render(ast.children));
-        element.setAttribute(BLOCK_TRANSLATED_ATTR, "1");
+        markBlockTranslated(element);
         return true;
     }
 
@@ -845,7 +876,7 @@ const api = (function () {
             }
         });
         element.replaceChildren(fragment);
-        element.setAttribute(BLOCK_TRANSLATED_ATTR, "1");
+        markBlockTranslated(element);
         return true;
     }
 
@@ -875,7 +906,7 @@ const api = (function () {
         } else {
             element.append(document.createTextNode(output));
         }
-        element.setAttribute(BLOCK_TRANSLATED_ATTR, "1");
+        markBlockTranslated(element);
         return true;
     }
 
@@ -890,7 +921,15 @@ const api = (function () {
         }
         let count = 0;
         candidates.forEach(function (element) {
-            if (element.hasAttribute(BLOCK_TRANSLATED_ATTR)) return;
+            if (element.hasAttribute(BLOCK_TRANSLATED_ATTR)) {
+                const output = readBlockAttribute(element, BLOCK_OUTPUT_ATTR);
+                const current = normalizeVisibleText(element.textContent || "");
+                // 元素内容没有变化时跳过；如果 SPA 复用了节点并更新了文本，
+                // 清掉旧标记后允许新的 blocks 模板重新匹配。
+                if (output && current === normalizeVisibleText(output)) return;
+                removeBlockAttribute(element, BLOCK_TRANSLATED_ATTR);
+                removeBlockAttribute(element, BLOCK_OUTPUT_ATTR);
+            }
             if (element.closest("[" + BLOCK_TRANSLATED_ATTR + "]")) return;
             const inline = serializeBlockWithInlineSlots(element);
             const inlineTemplate = inline.slots.length
